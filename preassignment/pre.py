@@ -3,11 +3,12 @@ import matplotlib.pyplot as plt
 import time
 from tqdm import trange
 
-N =200000 # Number of random walks
-n = 200 # Max number of steps / shape of t-array
+N =500000 # Number of random walks
+n = 300 # Max number of steps / shape of t-array
 t = np.arange(n)
 
-rand = np.random.uniform(-1,1,(N,n))
+#rand = np.random.uniform(-1,1,(N,n))
+rand = np.random.normal(size = (N,n))
 random_walks = np.cumsum(rand,axis = 1) - rand
 
 p = np.zeros(n)
@@ -25,11 +26,7 @@ for i in trange(N,desc="1"):
 
 logt = np.log(t)[2:]
 alpha = np.log(p[2:])
-print(logt[:2])
-
 coeffs = np.polyfit(logt, alpha,1)
-print(logt*coeffs[0]  + coeffs[1])
-print(alpha)
 print(coeffs)
 
 plt.figure()
@@ -43,9 +40,4 @@ plt.plot(alpha, label = r"$\alpha$")
 plt.plot(logt*coeffs[0] + coeffs[1], label = r"Linear fit. $\alpha = ${:.3f}".format(coeffs[0]))
 plt.grid()
 plt.legend()
-#plt.xscale("log")
-
-
 plt.show()
-
-# for i in tqdm(range(N)):
