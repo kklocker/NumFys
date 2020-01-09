@@ -35,13 +35,17 @@ print(coeffs)
 plt.figure()
 plt.subplot(121)
 plt.plot(p[2:], label = "Probability")
+plt.legend()
+plt.grid()
 
 plt.subplot(122)
-plt.plot(alpha, label = "Alpha")
-plt.plot(logt*coeffs[0] + coeffs[1], label = "Regression")
+plt.plot(alpha, label = r"$\alpha$")
+plt.plot(logt*coeffs[0] + coeffs[1], label = r"Linear fit. $\alpha = ${:.3f}".format(coeffs[0]))
+plt.grid()
+plt.legend()
 #plt.xscale("log")
 
-plt.legend()
+
 plt.show()
 
 # for i in tqdm(range(N)):
