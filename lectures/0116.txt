@@ -1,0 +1,7 @@
+Jan 16.
+---------
+
+
+Numerical precision. 
+ 	- Legg til tall som typisk er av samme størrelsesorden. Se eks om harmonisk rekke med forward/ backward sum.
+	- Å legge til tall som er nesten helt like vil også gi tap av informasjon, av akkurat samme grunn

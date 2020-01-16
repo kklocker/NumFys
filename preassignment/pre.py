@@ -4,7 +4,7 @@ import time
 from tqdm import trange
 
 N =500000 # Number of random walks
-n = 300 # Max number of steps / shape of t-array
+n = 100 # Max number of steps / shape of t-array
 t = np.arange(n)
 
 #rand = np.random.uniform(-1,1,(N,n))
@@ -24,6 +24,7 @@ for i in trange(N,desc="1"):
                 p[j] += 1
                 break
 
+p = p / np.linalg.norm(p)
 logt = np.log(t)[2:]
 alpha = np.log(p[2:])
 coeffs = np.polyfit(logt, alpha,1)
@@ -31,7 +32,7 @@ print(coeffs)
 
 plt.figure()
 plt.subplot(121)
-plt.plot(p[2:], label = "Probability")
+plt.semilogy(p[2:], label = "Probability")
 plt.legend()
 plt.grid()
 
