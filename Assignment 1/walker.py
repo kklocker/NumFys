@@ -67,13 +67,13 @@ def koch_walker(L,depth, i=0, j=0):
     walker = Walker(i,j)
     pos_dict = {}
     for _ in range(4):
-        _koch_recursion(walker, pos_dict, L, depth)
+        koch_recursion(walker, pos_dict, L, depth)
         walker.r()    
     return pos_dict
 
 
 @jit
-def _koch_recursion(walker, pos_dict, L,depth):
+def koch_recursion(walker, pos_dict, L,depth):
     """
     The recursion algorithm of the fractal.
     
