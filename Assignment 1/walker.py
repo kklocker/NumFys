@@ -73,28 +73,29 @@ def koch_walker(L,depth, i=0, j=0):
 
 
 @jit
-def koch_recursion(walker, pos_dict, L,depth):
+def koch_recursion(walker, pos_dict, L,depth, points_between = 0):
     """
     The recursion algorithm of the fractal.
     
     """
     #assert isinstance(depth,int)
     if depth ==0:
-        pos_dict[tuple(map(int, walker.position))] = "b"        
-        walker.f(L)
+        for _ in range(points_between+1):
+            pos_dict[tuple(map(int, walker.position))] = "b"        
+            walker.f(L)
     else:
         L /= 4.0
-        koch_recursion(walker, pos_dict,L,depth-1) # move forward
+        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
         walker.l()
-        koch_recursion(walker, pos_dict,L,depth-1) # move forward
+        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
         walker.r()
-        koch_recursion(walker, pos_dict,L,depth-1) # move forward
+        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
         walker.r()
-        koch_recursion(walker, pos_dict,L,depth-1) # move forward
-        koch_recursion(walker, pos_dict,L,depth-1) # move forward
+        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
+        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
         walker.l()
-        koch_recursion(walker, pos_dict,L,depth-1) # move forward
+        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
         walker.l()
-        koch_recursion(walker, pos_dict,L,depth-1) # move forward
+        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
         walker.r()
-        koch_recursion(walker, pos_dict,L,depth-1) # move forward
+        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
