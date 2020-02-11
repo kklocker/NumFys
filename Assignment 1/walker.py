@@ -52,7 +52,7 @@ class Walker(object):
 
 
 @jit
-def koch_walker(L,depth, i=0, j=0):
+def koch_walker(depth, i=0, j=0, points_between=0):
     """
     Creates a walker object and calls the recursive fractal method.
     Benchmark times:    (L, depth)
@@ -67,35 +67,35 @@ def koch_walker(L,depth, i=0, j=0):
     walker = Walker(i,j)
     pos_dict = {}
     for _ in range(4):
-        koch_recursion(walker, pos_dict, L, depth)
+        koch_recursion(walker, pos_dict, depth, points_between)
         walker.r()    
     return pos_dict
 
 
 @jit
-def koch_recursion(walker, pos_dict, L,depth, points_between = 0):
+def koch_recursion(walker, pos_dict, depth, points_between = 0):
     """
     The recursion algorithm of the fractal.
     
     """
     #assert isinstance(depth,int)
     if depth ==0:
-        for _ in range(points_between+1):
-            pos_dict[tuple(map(int, walker.position))] = "b"        
-            walker.f(L)
+        for i in range(points_between+1):
+            pos_dict[(tuple(map(int, walker.position))] = True       
+            walker.f(1)
     else:
-        L /= 4.0
-        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
+        #L /= 4.0
+        koch_recursion(walker, pos_dict,depth-1, points_between) # move forward
         walker.l()
-        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
+        koch_recursion(walker, pos_dict,depth-1, points_between) # move forward
         walker.r()
-        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
+        koch_recursion(walker, pos_dict,depth-1, points_between) # move forward
         walker.r()
-        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
-        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
+        koch_recursion(walker, pos_dict,depth-1, points_between) # move forward
+        koch_recursion(walker, pos_dict,depth-1, points_between) # move forward
         walker.l()
-        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
+        koch_recursion(walker, pos_dict,depth-1, points_between) # move forward
         walker.l()
-        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
+        koch_recursion(walker, pos_dict,depth-1, points_between) # move forward
         walker.r()
-        koch_recursion(walker, pos_dict,L,depth-1, points_between) # move forward
+        koch_recursion(walker, pos_dict,depth-1, points_between) # move forward
