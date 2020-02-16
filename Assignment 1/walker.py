@@ -51,7 +51,7 @@ class Walker(object):
             self.position = pos
 
 
-@jit
+@jit(nopython = False, forceobj = True)
 def koch_walker(depth, i=0, j=0, points_between=0):
     """
     Creates a walker object and calls the recursive fractal method.
@@ -65,14 +65,14 @@ def koch_walker(depth, i=0, j=0, points_between=0):
     :Returns: A dictionary consisting of boundary points of the fractal.
     """
     walker = Walker(i,j)
-    pos_dict = {}
+    pos_dict = dict()
     for _ in range(4):
         koch_recursion(walker, pos_dict, depth, points_between)
         walker.r()    
     return pos_dict
 
 
-@jit
+@jit(nopython= False, forceobj=True)
 def koch_recursion(walker, pos_dict, depth, points_between = 0):
     """
     The recursion algorithm of the fractal.
@@ -81,7 +81,7 @@ def koch_recursion(walker, pos_dict, depth, points_between = 0):
     #assert isinstance(depth,int)
     if depth ==0:
         for i in range(points_between+1):
-            pos_dict[(tuple(map(int, walker.position))] = True       
+            pos_dict[(tuple(map(int, walker.position)))] =True
             walker.f(1)
     else:
         #L /= 4.0

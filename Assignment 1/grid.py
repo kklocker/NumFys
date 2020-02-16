@@ -14,7 +14,7 @@ def create_lattice(g, points_between = 0):
     # N = 2*4**(g+1) # ~ca. the necessary resolution for the given depth, plus some slack.
 
     boundary_array = np.array(list(koch_walker(g, points_between=points_between)))
-        
+
     return boundary_array
 
 
@@ -42,11 +42,11 @@ def save_grid(boundary_array, depth, points_between):
     np.save(pathstr, boundary_array)
 
 
-def load_grid(depth, N):
+def load_grid(depth, points_between):
     
-    pathstr = f"boundary_grids/{N}_{depth}"
+    pathstr = f"boundary_grids/{points_between}_{depth}.npy"
     try:
-        arr = np.load(pathstr)
+        arr = np.load(pathstr, allow_pickle=True)
         return arr
     except IOError as e:
         print(e)
@@ -66,3 +66,4 @@ if __name__ == "__main__":
     st2 = time.time()
     save_grid(lattice,g, points_between)
     print(f"Total time elapsed: {time.time()-st} \t Time save: {time.time()-st2}")
+
