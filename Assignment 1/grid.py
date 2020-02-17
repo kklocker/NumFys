@@ -38,16 +38,16 @@ def save_grid(boundary_array, depth, points_between):
     Implement filesaving
 
     """
-    pathstr = f"boundary_grids/{points_between}_{depth}"
+    pathstr = f"boundary_grids/{depth}_{points_between}"
     np.save(pathstr, boundary_array)
 
 
 def load_grid(depth, points_between):
     
-    pathstr = f"boundary_grids/{points_between}_{depth}.npy"
+    pathstr = f"boundary_grids/{depth}_{points_between}.npy"
     try:
         arr = np.load(pathstr, allow_pickle=True)
-        return arr
+        return arr.item()
     except IOError as e:
         print(e)
         raise e
