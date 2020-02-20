@@ -1,6 +1,7 @@
 import numpy as np
 from walker import *
 import time
+import os
 
 def create_lattice(g, points_between = 0):
     """ 
@@ -33,6 +34,24 @@ def normalize(pointlist):
     max_idx = np.max(pointlist)
     return max_idx
 
+
+def get_grid(depth, points_between):
+    
+    path = f"boundary_grids/{depth}_{points_between}.npy"
+    if os.path.exists(path):
+        temp_dict = load_grid(path)
+    else:
+        temp_dict = koch_walker(depth=depth, points_between=points_between)
+        save_grid(temp_dict, depth, points_between)
+
+    return np.array(list(temp_dict))
+
+
+def convert_to_dict(pointlist):
+    """Converts (normalized) point list into dictionary.
+    """
+    pos_dict = {tuple(p): True for p in pointlist}
+    return pos_dict
 def save_grid(boundary_array, depth, points_between):
     """ 
     Implement filesaving
@@ -42,11 +61,9 @@ def save_grid(boundary_array, depth, points_between):
     np.save(pathstr, boundary_array)
 
 
-def load_grid(depth, points_between):
-    
-    pathstr = f"boundary_grids/{depth}_{points_between}.npy"
+def load_grid(path):
     try:
-        arr = np.load(pathstr, allow_pickle=True)
+        arr = np.load(path, allow_pickle=True)
         return arr.item()
     except IOError as e:
         print(e)
