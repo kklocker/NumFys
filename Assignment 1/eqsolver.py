@@ -7,6 +7,7 @@ import matplotlib.path as mpath
 from time import time
 import palettable as pl
 import os
+from dask import delayed, compute
 
 # Egne filer
 from grid import get_grid, normalize, convert_to_dict
@@ -84,17 +85,42 @@ def load_solutions(g, pts, k):
         return
 
 
+def main_dask_routine(testing=True):
+    """ Not properly implemented. Needs a bit of rewriting before these can be run in parallell.
+    dask.delayed don't support mutable functions. (Hard to achieve mutation and resilience at the same time)
+    """
+    if testing:
+        configs = [(1, p) for p in range(3)]
+    else:
+        configs2 = [(2, p) for p in range(10)]
+        configs3 = [(3, p) for p in range(8)]
+        configs4 = [(4, 0)]
+        configs = configs2 + configs3 + configs4
+
+    solutions = []
+    for cfg in configs:
+        g, pts = cfg
+        pos_list = delayed(get_grid)(g, pts)
+        m_idx, pos_list = normalize(pos_list)
+        pos_dict = convert_to_dict(pos_list)
+        classification = contains(pos_dict, m_idx)
+        U = get_matrix(m_idx, pos_dict, classification)
+        sol = solve(U, g, pts)
+        solutions.append(sol)
+    print(solutions)
+    compute(*solutions)
+
+
 if __name__ == "__main__":
     a = time()
-    g = 3
-    pts = 2
+    g = 4
+    pts = 1
     pos_list = get_grid(g, pts)
 
-
-    pathstr =f"div/setup_and_solve_{g}_{pts}" 
+    pathstr = f"div/setup_and_solve_{g}_{pts}"
 
     if os.path.exists(pathstr):
-        time_dict = np.load(pathstr + ".npy", allow_pickle = True).item()
+        time_dict = np.load(pathstr + ".npy", allow_pickle=True).item()
     else:
         time_dict = {}
 
@@ -102,7 +128,7 @@ if __name__ == "__main__":
     print(f"Got poslist. Time: {b-a}")
 
     m_idx = normalize(pos_list)
-    
+
     c = time()
     print("Max idx: ", m_idx, f"Time: {c-b}\t Total time: {c-a}")
     pos_dict = convert_to_dict(pos_list)
@@ -114,15 +140,18 @@ if __name__ == "__main__":
     e_ = time()
     print(f"Done classifying. Time: {e_-d}\t Total time: {e_-a}")
     U = get_matrix(m_idx, pos_dict, classification)
-    
+
     f = time()
     print(f"Got matrix. Time: {f-e_}\t Total time: {f-a}")
     e, v = solve(U, g, pts)
 
     g_ = time()
     print(f"Finished solving. Time: {g_-f}\t Total time: {g_-a}")
-    
 
-    time_dict[tuple((g,pts))] = {"classification": e_-d, "matrix_setup":f-e_, "solver":g_-f}
+    time_dict[tuple((g, pts))] = {
+        "classification": e_ - d,
+        "matrix_setup": f - e_,
+        "solver": g_ - f,
+    }
 
     np.save(pathstr, time_dict)
