@@ -1,11 +1,14 @@
 import scipy.sparse as sp
+import scipy.sparse.linalg as spl
 from numba import jit
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 from time import time
 import palettable as pl
+import os
 
+# Egne filer
 from grid import get_grid, normalize, convert_to_dict
 from classification import contains, ray_tracing, floodfill
 
@@ -30,7 +33,7 @@ def get_matrix(max_idx, boundary_dict=None, classification=None):
     return A
 
 
-@jit
+@jit(nopython=False, forceobj=True)
 def fix_matrix(matrix, N_max, boundary_dict=None, contains=None):
     """
     param matrix: Matrix to be "fixed"
@@ -62,7 +65,7 @@ def fix_matrix(matrix, N_max, boundary_dict=None, contains=None):
 
 
 def solve(U, g, pts, k=100, save=True):
-    e, v = sp.linalg.eigs(U, which="LM", k=k)
+    e, v = spl.eigs(U, which="LM", k=k)
     if save:
         pathstr = f"solutions/solution_{g}_{pts}_{k}"
         np.save(pathstr, (e, v))
@@ -82,12 +85,44 @@ def load_solutions(g, pts, k):
 
 
 if __name__ == "__main__":
+    a = time()
     g = 3
-    pts = 1
+    pts = 2
     pos_list = get_grid(g, pts)
+
+
+    pathstr =f"div/setup_and_solve_{g}_{pts}" 
+
+    if os.path.exists(pathstr):
+        time_dict = np.load(pathstr + ".npy", allow_pickle = True).item()
+    else:
+        time_dict = {}
+
+    b = time()
+    print(f"Got poslist. Time: {b-a}")
+
     m_idx = normalize(pos_list)
+    
+    c = time()
+    print("Max idx: ", m_idx, f"Time: {c-b}\t Total time: {c-a}")
     pos_dict = convert_to_dict(pos_list)
+
+    d = time()
+    print(f"Got position_dict. Time: {d-c}\t Total time:  {d-a}")
     classification = contains(pos_dict, m_idx)
 
+    e_ = time()
+    print(f"Done classifying. Time: {e_-d}\t Total time: {e_-a}")
     U = get_matrix(m_idx, pos_dict, classification)
+    
+    f = time()
+    print(f"Got matrix. Time: {f-e_}\t Total time: {f-a}")
     e, v = solve(U, g, pts)
+
+    g_ = time()
+    print(f"Finished solving. Time: {g_-f}\t Total time: {g_-a}")
+    
+
+    time_dict[tuple((g,pts))] = {"classification": e_-d, "matrix_setup":f-e_, "solver":g_-f}
+
+    np.save(pathstr, time_dict)
