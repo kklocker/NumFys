@@ -20,7 +20,7 @@ def create_lattice(g, points_between=0):
     return boundary_array
 
 
-def normalize(pointlist, parallell=True):
+def normalize(pointlist, parallell=False):
     """
     Normalize the numpy array to have minimums at index 0 and index the same as latticespacing
     returns largest index of the grid.

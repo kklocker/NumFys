@@ -4,8 +4,11 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpath
 import palettable as pl
 from grid import get_grid, normalize
+from numba import jit
+import os
 
 
+@jit(nopython=False, forceobj=True)
 def ray_tracing(point, pos_dict, max_idx):
     """
     Should add support for dictionary containing all previously found points. 
@@ -119,11 +122,11 @@ def contains(pos_dict, max_idx, f=None, parallell=False):
     max_idx: largest index of square array
     f: Function for determining the 
     """
-
     pts = np.array(
         [(i, j) for i in range(max_idx) for j in range(max_idx)]
     )  # all possible points in our square
     # pts = [[106,106]]
+
     temp = []
     if parallell:
 
