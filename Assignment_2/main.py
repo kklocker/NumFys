@@ -16,10 +16,10 @@ square = jit(nopython=False)(sq)
 
 
 def Ur(x, L, alpha, deltaU):
-    k1 = deltaU / (alpha)
-    k2 = 1 / (1 - alpha)
-    a = x % 1.0
-    return np.where(a < alpha, k1 * a, k2 * (1 - a))
+    k1 = deltaU / (L * alpha)
+    k2 = deltaU / (L * (1 - alpha))
+    a = x % L
+    return np.where(a < alpha * L, k1 * a, k2 * (L - a))
 
 
 def f(t, tau):
