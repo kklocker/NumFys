@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from main import f, Ur, U
+from utils import U
+
 
 if __name__ == "__main__":
 
@@ -17,7 +18,6 @@ if __name__ == "__main__":
 
     X, T = np.meshgrid(x, t)
 
-    plt.contourf(X, T, U(X, T, 1.0, L=1, alpha=0.2, deltaU=1), levels=100)
+    plt.contourf(X, T, U(X, T, alpha=0.2, tau=1.0, flashing=True), levels=100)
     plt.colorbar()
     plt.show()
-

@@ -1,45 +1,16 @@
-# import numpy as np
 import autograd.numpy as np
 from autograd import elementwise_grad as egrad
 from dask import delayed, compute
 from numba import jit
 import matplotlib.pyplot as plt
-from matplotlib import animation
-from mpl_toolkits.mplot3d import Axes3D
-from scipy.signal import square as sq
+
+from utils import U, force, rand_gauss, get_time_step, normalized_constants
+
+kb = 1.3806e-23
 
 
-D = 1
-
-
-square = jit(nopython=False)(sq)
-
-
-def Ur(x, L, alpha, deltaU):
-    k1 = deltaU / (L * alpha)
-    k2 = deltaU / (L * (1 - alpha))
-    a = x % L
-    return np.where(a < alpha * L, k1 * a, k2 * (L - a))
-
-
-def f(t, tau):
-    l = np.ones_like(t)
-    a = t % tau
-    return np.where(a < 3 * tau / 4, 0 * l, l)
-
-
-@jit(nopython=False)
-def U(x, t, tau, L=20e-6, alpha=0.2, deltaU=80 * 1.6e-19):
-    return Ur(x, L, alpha, deltaU) * f(t, tau)
-
-
-@jit
-def force(x, t):
-    return -egrad(U, 0)(x, t)
-
-
-@jit
-def euler_scheme(x, t, dt):
+@jit(nopython=False, forceobj=True)
+def euler_scheme(x, n, dt, D):
     """Returns the *next* point in time-domain
     
     Arguments:
@@ -48,73 +19,41 @@ def euler_scheme(x, t, dt):
         dt {float} -- time step
     """
 
-    global D
-
-    du = egrad(U, 0)(x, t, 1.0)
-    ksi = gaussian(x.shape[0])
+    du = force(x, n * dt, 0.2, 1)
+    ksi = rand_gauss(x.shape[0])
 
     return x - du * dt + np.sqrt(2 * D * dt) * ksi
 
 
-@jit(nopython=True)
-def gaussian(N):
-    return np.random.normal(0, 1, N)
+# def simulate_particle():
+#     """
+#     Parameters from
+
+#     J. S. Bader, R. W. Hammond, S. A Henck, M. W. Deem, G. A. McDermott, J. M. Bustillo,
+#     J. W. Simpson, G. T. Mulhern, and J. M. Rothberg. DNA transport by a micromachined
+#     """
 
 
-def simulate_particle():
-    """
-    Parameters from
+# def parallelize_routine():
+#     """Routine for parallellizing multiple computations of the problem
 
-    J. S. Bader, R. W. Hammond, S. A Henck, M. W. Deem, G. A. McDermott, J. M. Bustillo,
-    J. W. Simpson, G. T. Mulhern, and J. M. Rothberg. DNA transport by a micromachined
-    """
-    r1 = 12e-12
-    L = 20e-6
-    alpha = 0.2
-    eta = 1e-3
-    kbt = 26e-3
-    delta_u = 80 * 1.60e-19
-
-
-def parallelize_routine():
-    """Routine for parallellizing multiple computations of the problem
-    
-    Arguments:
-        N {integer} -- number of different particles to simulate
-    """
-
-
-def test_plot():
-    x = np.linspace(-10, 10)
-    t = np.linspace(0, 10)
-
-    X, T = np.meshgrid(x, t)
-    u = U(X, T, 1)
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-
-    ax.contourf(X, T, u)
-
-    plt.show()
+#     Arguments:
+#         N {integer} -- number of different particles to simulate
+#     """
 
 
 if __name__ == "__main__":
 
-    test_plot()
+    data = {
+        "r": 12e-12,
+        "L": 20e-6,
+        "alpha": 0.2,
+        "eta": 1e-3,
+        "kbt": 26e-3,
+        "delta_u": 80 * 1.60e-19,
+    }
 
-    # n = 1000
-    # N = 1000
-    # T = 1
+    gamma, omega, D = normalized_constants()
+    dt = get_time_step(data["alpha"], D, tol=0.1)
+    N = 10000  # number of steps
 
-    # t = np.linspace(0, T, N)
-    # dt = T / N
-    # x = np.zeros(n)
-    # avg_pos = []
-    # for i in range(N):
-    #     avg = np.average(x)
-    #     avg_pos.append(avg)
-    #     x = euler_scheme(x, i * dt, dt)
-
-    # plt.plot(t, avg_pos)
-    # plt.show()
