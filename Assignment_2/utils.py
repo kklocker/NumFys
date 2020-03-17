@@ -4,6 +4,7 @@ from autograd import elementwise_grad as egrad
 from dask import delayed, compute
 from numba import jit, njit, vectorize, float64, boolean
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 # @jit(nopython=False, forceobj=True)
@@ -18,6 +19,9 @@ def Ur(x, alpha):
 
 
 # @jit(nopython=True)
+# @njit
+# @vectorize([float64(float64, float64, boolean)])
+@jit(nopython=False, forceobj=True)
 def f(t, tau, flashing=True):
     """Help funtion for time-part of potential
     
@@ -46,8 +50,10 @@ def U(x, t, alpha, tau, flashing=True):
     return Ur(x, alpha) * f(t, tau)
 
 
-# @vectorize([float64(float64, float64)])
 # @jit(nopython=True)
+# @njit
+# @vectorize([float64(float64, float64)])
+@jit(nopython=False, forceobj=True)
 def force_x(x, alpha):
     k1 = 1 / alpha
     k2 = 1 / (1 - alpha)
@@ -56,12 +62,16 @@ def force_x(x, alpha):
 
 
 # @vectorize([float64(float64, float64, float64, float64, boolean)])
+# @njit
 @jit(nopython=False, forceobj=True)
 def force(x, t, alpha, tau, flashing=True):
     # return -egrad(U, 0)(x, t, alpha, tau, flashing)
+
+    fx = force_x(x, alpha)
     if not flashing:
-        return force_x(x, alpha)
-    return force_x(x, alpha) * f(t, tau)
+        return fx
+    ft = f(t, tau)
+    return fx * ft
 
 
 @jit(nopython=True)
@@ -111,3 +121,36 @@ def normalized_constants(**kwargs):
     D = kbt / delta_u
 
     return gamma, omega, D
+
+
+def dist_plot(pos, dt, du, omega, N_steps):
+    # sns.distplot(
+    #     pos[:, 2],
+    #     hist=False,
+    #     kde=True,
+    #     kde_kws={"shade": True},
+    #     label=f"$\hat t$ = {2*dt / omega:.4f}s",
+    # )
+
+    sns.distplot(
+        pos[:, int(N_steps // 2)],
+        hist=False,
+        kde=True,
+        kde_kws={"shade": True},
+        label=fr"$\hat t$ = {int(N_steps//2)*dt / omega:.4f}s",
+    )
+
+    sns.distplot(
+        pos[:, -1],
+        hist=False,
+        kde=True,
+        kde_kws={"shade": True},
+        label=fr"$\hat t$ = {N_steps*dt / omega:.4f}s",
+    )
+    plt.legend(fontsize=15)
+    plt.ylabel(f"Density", fontsize=15)
+    plt.xlabel(r"$\frac{x}{L}$", fontsize=20)
+    plt.title(fr"$\Delta U = {du}\, \mathrm{{k_BT}}$")
+    plt.savefig(f"img/du_{du}.png")
+    plt.show()
+
