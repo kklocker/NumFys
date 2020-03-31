@@ -123,6 +123,17 @@ def normalized_constants(**kwargs):
     return gamma, omega, D
 
 
+def compute_average_velocity(avg_pos, dt):
+    """Computes the average drift velocity of a particle. Takes the average positions as input. 
+    
+    Arguments:
+        avg_pos {array} -- Average positions
+        dt {float} -- time step between each positions measurement
+    """
+
+    return np.diff(avg_pos) / dt
+
+
 def dist_plot(pos, dt, du, omega, N_steps):
     # sns.distplot(
     #     pos[:, 2],
@@ -153,4 +164,3 @@ def dist_plot(pos, dt, du, omega, N_steps):
     plt.title(fr"$\Delta U = {du}\, \mathrm{{k_BT}}$")
     plt.savefig(f"img/du_{du}.png")
     plt.show()
-

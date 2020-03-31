@@ -43,7 +43,7 @@ def get_matrix_higher_order(M):
     diag1 = -16 * diag[:-1]
     diag2 = diag[:-2]
     diagonals = [
-        diag2[: -(k - 1)],
+        diag2[: -2 * (k - 1)],  # This was wrong before
         diag1[: -(k - 1)],
         diag2,
         diag1,
@@ -51,9 +51,19 @@ def get_matrix_higher_order(M):
         diag1,
         diag2,
         diag1[: -(k - 1)],
-        diag2[: -(k - 1)],
+        diag2[: -2 * (k - 1)],  # This was wrong
     ]
-    offsets = [-k - 1, -k, -2, -1, 0, 1, 2, k, k + 1]
+    offsets = [
+        -2 * k,
+        -k,
+        -2,
+        -1,
+        0,
+        1,
+        2,
+        k,
+        2 * k,
+    ]  # the two ends of the list was wrong
     A = sp.diags(diagonals, offsets=offsets, format="lil", shape=(n, n))
     return A
 
