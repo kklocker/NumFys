@@ -58,6 +58,18 @@ def solution_loop(N_steps, N_particles, dt, alpha, D, tau, flashing):
     return particle_positions
 
 
+@jit(nopython=False, forceobj=True)
+def solution_loop_average(N_steps, N_particles, dt, alpha, D, tau, flashing):
+
+    particle_positions = np.zeros(N_steps)
+    curr_pos = np.zeros(N_particles)
+    for n in range(1, N_steps):
+        f = force(curr_pos, n * dt, alpha, tau, flashing)
+        curr_pos = euler_scheme(curr_pos, n, dt, D, f)
+        particle_positions[n] = np.average(curr_pos)
+    return particle_positions
+
+
 # @jit(nopython=False, forceobj=True)
 def particles_simulation(data, N_steps, N_particles, flashing=False, tau=None):
     """Runs a simulation of particles specified from "data"
@@ -131,6 +143,23 @@ def particles_simulation_flashing():
         "delta_u": 80 * 1.60e-19,
     }
 
+    return
+
+
+def average_particle_simulation(data, time, N, tau, flashing=True):
+
+    gamma, omega, D = normalized_constants(**data)
+    ntime = omega * time
+
+    print(f"gamma: {gamma}, \tomega: {omega},\t D: {D}")
+    dt = get_time_step(data["alpha"], D, tol=0.08)
+    N_steps = int(ntime // dt)
+    print(f"dt: {dt}, \t N_steps: {N_steps}")
+    avg_pos = solution_loop_average(N_steps, N, dt, data["alpha"], D, tau, flashing)
+
+    nc = {"gamma": gamma, "omega": omega, "D": D, "dt": dt, "N_steps": N_steps}
+    return avg_pos, nc
+
 
 def load_simulations_du(du, N_steps, N_particles):
     pos, nc = np.load(
@@ -154,4 +183,3 @@ if __name__ == "__main__":
     N_particles = 1000
 
     # particles_simulation2(5.0, N_particles, None, False)
-
