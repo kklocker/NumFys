@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from tqdm import trange
 from time import time
 import seaborn as sns
+from scipy.integrate import simps
 
 sns.set()
 
@@ -35,7 +36,18 @@ def boltzmann(U, du, kbT):
         du {[type]} -- [description]
         KbT {[type]} -- [description]
     """
-    return np.exp(-(U * du) / kbT) / (kbT * (1 - np.exp(-(du / kbT))))
+    print(du, kbT)
+    f = du / kbT
+    print(f)
+    return np.exp(-(U * f)) / (kbT * (1 - np.exp(-(f))))
+
+
+def normalize_distribution(dist):
+    """Normalizes a distribution
+    
+    """
+    N = simps(dist, dx=1 / dist.shape[0])
+    return dist / N
 
 
 def plot_position_distribution(t_list, avg_pos_list, std):
@@ -60,14 +72,18 @@ def solution_loop(N_steps, N_particles, dt, alpha, D, tau, flashing):
 
 @jit(nopython=False, forceobj=True)
 def solution_loop_average(N_steps, N_particles, dt, alpha, D, tau, flashing):
-
+    """ Returns average positions of simulation, and the individual particle positions at det last time step.
+    
+    Returns:
+        Array, Array -- average positions, last step positions
+    """
     particle_positions = np.zeros(N_steps)
     curr_pos = np.zeros(N_particles)
     for n in range(1, N_steps):
         f = force(curr_pos, n * dt, alpha, tau, flashing)
         curr_pos = euler_scheme(curr_pos, n, dt, D, f)
         particle_positions[n] = np.average(curr_pos)
-    return particle_positions
+    return particle_positions, curr_pos
 
 
 # @jit(nopython=False, forceobj=True)
@@ -155,10 +171,12 @@ def average_particle_simulation(data, time, N, tau, flashing=True):
     dt = get_time_step(data["alpha"], D, tol=0.08)
     N_steps = int(ntime // dt)
     print(f"dt: {dt}, \t N_steps: {N_steps}")
-    avg_pos = solution_loop_average(N_steps, N, dt, data["alpha"], D, tau, flashing)
+    avg_pos, last_step = solution_loop_average(
+        N_steps, N, dt, data["alpha"], D, omega * tau, flashing
+    )
 
     nc = {"gamma": gamma, "omega": omega, "D": D, "dt": dt, "N_steps": N_steps}
-    return avg_pos, nc
+    return avg_pos, nc, last_step
 
 
 def load_simulations_du(du, N_steps, N_particles):

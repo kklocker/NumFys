@@ -14,7 +14,7 @@ def Ur(x, alpha):
     """
     k1 = 1 / alpha
     k2 = 1 / (1 - alpha)
-    a = x % 1.0
+    a = x.astype(float) % 1.0
     return npp.where(a < alpha, k1 * a, k2 * (1 - a))
 
 
