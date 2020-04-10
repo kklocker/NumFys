@@ -123,15 +123,32 @@ def normalized_constants(**kwargs):
     return gamma, omega, D
 
 
-def compute_average_velocity(avg_pos, dt):
-    """Computes the average drift velocity of a particle. Takes the average positions as input. 
-    
-    Arguments:
-        avg_pos {array} -- Average positions
-        dt {float} -- time step between each positions measurement
-    """
+def avg_vel(avg_pos, max_time):
+    """Computes the average velocity by taking the difference of the last and first element
+     
+     Arguments:
+         avg_pos  -- [list of average positions for each time step]
+         max_time  -- [maximum (NOT NORMALIZED) time of the simulation.]
+     """
+    return (avg_pos[-1] - avg_pos[0]) / max_time
 
-    return np.diff(avg_pos) / dt
+
+def save_solution(pos, nc, split_number, particle_type=1, flashing=False):
+    N, k = pos.shape
+    arr = np.linspace(1, k - 1, split_number, dtype=int)
+    tmp_arr = pos[:, arr]
+    dt = nc["dt"]
+    omega = nc["omega"]
+    MT = round(k * dt / omega)
+    if flashing:
+        np.save(
+            f"simulations/particle{particle_type}_flash_N{N}_MT{MT}", [tmp_arr, nc_1]
+        )
+    else:
+        np.save(
+            f"simulations/particle{particle_type}_no_flash_N{N}_MT{MT}", [tmp_arr, nc_1]
+        )
+    print("Saved. ")
 
 
 def dist_plot(pos, dt, du, omega, N_steps):

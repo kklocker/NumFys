@@ -18,12 +18,12 @@ from utils import U, force, rand_gauss, get_time_step, normalized_constants
 kb = 1.3806e-23
 
 
-@njit  # (nopython=False, forceobj=True)
-def euler_scheme(x, n, dt, D, F):
+# @njit  # (nopython=False, forceobj=True)
+def euler_scheme(x, dt, D, F):
     # du = force(x, n * dt, 0.2, 1, flashing)
 
     ksi = rand_gauss(x.shape[0])
-    # print(F.shape)
+
     return x - F * dt + np.sqrt(2 * D * dt) * ksi
 
 
@@ -42,6 +42,21 @@ def boltzmann(U, du, kbT):
     return np.exp(-(U * f)) / (kbT * (1 - np.exp(-(f))))
 
 
+def particle_diffusion(x, t, N, particle):
+    """Solution for particle density
+    
+    Arguments:
+        x  -- [position]
+        t -- [time]
+    """
+
+    kbt = particle["kbt"]
+    gamma = 6 * np.pi * particle["eta"] * particle["r"]
+    D = kbt / gamma
+    print(D)
+    return (N / (np.sqrt(4 * np.pi * D * t))) * np.exp(-(x ** 2) / (4 * D * t))
+
+
 def normalize_distribution(dist):
     """Normalizes a distribution
     
@@ -58,15 +73,17 @@ def plot_position_distribution(t_list, avg_pos_list, std):
 
 
 @jit(nopython=False, forceobj=True)
-def solution_loop(N_steps, N_particles, dt, alpha, D, tau, flashing):
+def solution_loop(N_steps, N_particles, dt, alpha, D, tau, flashing, potential_on=True):
 
-    particle_positions = np.zeros((N_particles, N_steps))
-
+    particle_positions = np.zeros((N_steps, N_particles))
+    curr_pos = np.zeros(N_particles)
     for n in range(1, N_steps):
-        f = force(particle_positions[:, n - 1], n * dt, alpha, tau, flashing)
-        particle_positions[:, n] = euler_scheme(
-            particle_positions[:, n - 1], n, dt, D, f
-        )
+        if potential_on:
+            f = force(curr_pos, n * dt, alpha, tau, flashing)
+        else:
+            f = np.zeros_like(curr_pos)
+        curr_pos = euler_scheme(curr_pos, dt, D, f)
+        particle_positions[n] = curr_pos
     return particle_positions
 
 
@@ -81,7 +98,7 @@ def solution_loop_average(N_steps, N_particles, dt, alpha, D, tau, flashing):
     curr_pos = np.zeros(N_particles)
     for n in range(1, N_steps):
         f = force(curr_pos, n * dt, alpha, tau, flashing)
-        curr_pos = euler_scheme(curr_pos, n, dt, D, f)
+        curr_pos = euler_scheme(curr_pos, dt, D, f)
         particle_positions[n] = np.average(curr_pos)
     return particle_positions, curr_pos
 
@@ -139,33 +156,33 @@ def particles_simulation2(time, N_particles, tau=None, flashing=False):
         )
 
 
-def particles_simulation_flashing():
+def particles_simulation_3(
+    data, max_time, N_particles, tau=0.0, flashing=False, potential_on=True
+):
+    """Runs a simulation of particles specified from "data"
+    
+    Arguments:
+        data {dict} -- Dictionary containing all relevant data of the particle
+        max_time -- Maximum time. Number of steps will be deduced.
+        N_particles {int} -- Number of noninteracting particles in the ensamble
+    """
+    alpha = data["alpha"]
+    gamma, omega, D = normalized_constants(**data)
+    ntime = omega * max_time
+    dt = get_time_step(alpha, D, tol=0.08)
+    N_steps = int(ntime // dt)
+    particle_positions = solution_loop(
+        N_steps, N_particles, dt, alpha, D, omega * tau, flashing, potential_on
+    )
 
-    data1 = {
-        "r": 12e-9,
-        "L": 20e-6,
-        "alpha": 0.2,
-        "eta": 1e-3,
-        "kbt": 26 * 1.60e-22,
-        "delta_u": 80 * 1.60e-19,
-    }
-
-    data2 = {
-        "r": 3 * 12e-9,  # Three times the radius
-        "L": 20e-6,
-        "alpha": 0.2,
-        "eta": 1e-3,
-        "kbt": 26 * 1.60e-22,
-        "delta_u": 80 * 1.60e-19,
-    }
-
-    return
+    nc = {"gamma": gamma, "omega": omega, "D": D, "dt": dt}
+    return particle_positions, nc
 
 
-def average_particle_simulation(data, time, N, tau, flashing=True):
+def average_particle_simulation(data, max_time, N, tau, flashing=True):
 
     gamma, omega, D = normalized_constants(**data)
-    ntime = omega * time
+    ntime = omega * max_time
 
     print(f"gamma: {gamma}, \tomega: {omega},\t D: {D}")
     dt = get_time_step(data["alpha"], D, tol=0.08)
@@ -177,6 +194,42 @@ def average_particle_simulation(data, time, N, tau, flashing=True):
 
     nc = {"gamma": gamma, "omega": omega, "D": D, "dt": dt, "N_steps": N_steps}
     return avg_pos, nc, last_step
+
+
+def tau_simulation(data, N, tau_list, flashing=True):
+    avg_pos_list = []
+    last_step_list = []
+    nc_list = []
+
+    max_times = [max(5, 3 * t) for t in tau_list]
+
+    gamma, omega, D = normalized_constants(**data)
+
+    ntime_list = [omega * max_time for max_time in max_times]
+
+    print(f"gamma: {gamma}, \tomega: {omega},\t D: {D}")
+    dt = get_time_step(data["alpha"], D, tol=0.08)
+    N_steps_list = [int(ntime // dt) for ntime in ntime_list]
+    print(f"dt: {dt}, \t N_steps: {N_steps_list}")
+    for i, tau in enumerate(tau_list):
+        a = time()
+        avg_pos, last_step = solution_loop_average(
+            N_steps_list[i], N, dt, data["alpha"], D, omega * tau, flashing
+        )
+
+        avg_pos_list.append(avg_pos)
+        last_step_list.append(last_step)
+        b = time()
+        print(f"Loop took {b-a}s. Loop number: {i}")
+        nc = {
+            "gamma": gamma,
+            "omega": omega,
+            "D": D,
+            "dt": dt,
+            "N_steps": N_steps_list[i],
+        }
+        nc_list.append(nc)
+    return avg_pos_list, nc_list, last_step_list
 
 
 def load_simulations_du(du, N_steps, N_particles):
