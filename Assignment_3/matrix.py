@@ -34,3 +34,31 @@ def matrix_box_potential(N, order=4):
         raise NotImplementedError
 
     return A
+
+
+def solve_egenvalues(H):
+    # e, v = eigsh(H, k=(H.shape[0] - 1), which="LM")
+    e, v = np.linalg.eigh(H.toarray())
+    np.save("eigsh/eigenvalue", e)
+    np.save("eigsh/eigenvectors", v)
+    return e, v
+
+
+def get_coeffs(Psi_0, v):
+    """Gets the coefficient by taking the 
+    inner product, implicitly doing the integral.
+    
+    Arguments:
+        psi {Array} -- [Fully constructed \Psi_0]
+        v {Array} -- [description]
+    
+    Returns:
+        [type] -- [description]
+    """
+    cn = v.T @ Psi_0
+    return cn
+
+
+def psi(e, v, psi_0, t):
+    cn = get_coeffs(psi_0, v)
+    return (cn * np.exp(-1j * e * t)) @ v
