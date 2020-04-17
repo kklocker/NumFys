@@ -19,9 +19,9 @@ t' = \frac{\hbar}{2mL^2}t,\quad x' = \frac{x}{L}
 gives the wanted dimensionless equation
 \begin{equation}
 \label{eq:SE_dimensionless}
-i\pdv{\psi}{t'} = -\pdv[2]{\psi}{{x'}}
+i\pdv{\psi}{t'} = -\pdv[2]{\psi}{{x'}}.
 \end{equation}
-Inserting our new variables in \cref{eq:TISE} with \[H = \frac{\hat p^2}{2m} + V(x) =  -\frac{-\hbar}{2mL^2} \pdv[2]{{x'}} + \tilde{V}(x')\], we get
+Inserting our new variables in \cref{eq:TISE} with \[H = \frac{\hat p^2}{2m} + V(x) =  -\frac{-\hbar}{2mL^2} \pdv[2]{{x'}} + \tilde{V}(x'),\] we get
 \begin{align} 
 \frac{-\hbar^2}{2mL^2}\pdv[2]{\psi_n}{{x'}} &= E_n\psi_n \implies \nonumber\\
 \label{eq:eig}
@@ -31,7 +31,7 @@ with the relation
 \begin{equation} 
 \lambda_n = \frac{2mL^2 E_n}{\hbar^2}
 \end{equation}
-between the energy levels and the dimensionless eigenvalues. The boundary conditions that the wave function disappears in the walls, but the walls are now at $x' = 0$ and $x' = 1$. It is now clear that choosing $x_0 = L$ is suitable, as it makes us able to work on the simple domain $[0,1]$. Any other proportionality constant $\alpha\in \mathbb{R}$ such that $x' = \alpha x/ L$ should work as well, scaling both the time and energies by a factor $\alpha^2 $, as long as $x'$ is dimensionless. Other scaling possibilites are also possible, and have consequences for the analytic expressions for $\psi$. For example scaling the interval to be mirrored about $x = 0$ would only pick out the even terms in a Fourier series expansion.
+between the energy levels and the dimensionless eigenvalues. The boundary conditions that the wave function disappears in the walls, but the walls are now at $x' = 0$ and $x' = 1$. It is now clear that choosing $x_0 = L$ is suitable, as it makes us able to work on the simple domain $[0,1]$. Any other proportionality constant $\alpha\in \mathbb{R}$ such that $x' = \alpha x/ L$ should work as well, scaling both the time and energies by a factor $\alpha^2 $, as long as $x'$ is dimensionless. Other scaling possibilities are also possible, and have consequences for the analytic expressions for $\psi$. For example scaling the interval to be mirrored about $x = 0$ would only pick out the even terms in a Fourier series expansion.
 
 Solving \cref{eq:eig} with the imposed boundary conditions can be done analytically in the following manner.
 Since we are looking for solutions that have self-similar second derivatives with an extra minussign, we guess a solution on the form 
@@ -44,5 +44,32 @@ where $\mathcal{N}$ is a normalization constant to be decided.
 1 &= \braket{\psi_n}{\psi_n} = \mathcal{N}^2\int_{0}^{1}\dd{x'}\sin[2](n\pi x') \\
 &=\mathcal{N}^2\int_0^1\dd{x'}\frac{1-\cos(2\pi n x')}{2}
 = \frac{\mathcal{N}^2}{2} \\
-&\implies \mathcal{N} = \sqrt{2}.
+&\implies \mathcal{N} = \sqrt{2},
+\end{align*}
+and we have the analytic solution as announced in \cite{assignment}.
+
+The implementation of a finite-difference-scheme is done using sparse matrix formatting for the cases when the discretization step is very small. Otherwise a dense matrix format is sufficient.
+\todo{Sett inn graf av egenverdier sammenliknet med analytisk uttrykk.}
+
+
+The implementation of 
+\begin{equation} 
+\alpha_n = \braket{\psi_n}{\Psi_0} = \int\dd{x'}\psi_n^*(x')\Psi_0(x')
+\end{equation}
+can be done in a simple fashion by taking optimized inner-product implementations for general vectors, so calculating the actual integral is actually not needed. \todo{Finn ut om simpsons metode funke greit, og eventuelt sammenlikn.}
+
+
+\todo{Scaling of error }
+To compute the error of a numerical solution, we must have a metric of some sort. Let us use 
+\begin{equation} 
+E[\bar\psi_n(x')] = \int\dd{x'}|\bar \psi_n(x')-\psi_n(x')|^2
+\end{equation}
+as an example, where the bar denotes the numerical approximation to the analytic function.
+Using the reduced units previously discussed, we can express the full state
+\begin{equation} 
+\Psi(x, t) = \sum_n\alpha_n\exp(-\frac{iE_n t}{\hbar})\psi_n(x)
+\end{equation}
+as
+\begin{align*} 
+\sum_n\alpha_n\exp(-\frac{iE_n t}{\hbar})&\psi_n(x) =\sum_n\alpha_n\exp(-\frac{iE_n t}{\hbar})\psi_n(x) \\ &=\sum_n\exp(-\frac{i\frac{\hbar^2\lambda_n}{2mL^2}\frac{2mL^2t'}{\hbar}}{\hbar})\psi_n(x') \\&= \sum_n\alpha_n\exp(-i\lambda_n t')\psi_n(x').
 \end{align*}
