@@ -1,0 +1,66 @@
+\documentclass[5p]{elsarticle}			% 5p gir 2 kolonner pr side. 1p gir 1 kolonne pr side.
+\journal {Veileder}
+\usepackage[T1]{fontenc} 				% Vise norske tegn.
+%\usepackage[norsk]{babel}				% Tilpasning til norsk.
+\usepackage{graphicx}       				% For å inkludere figurer.
+\usepackage{amsmath,amssymb} 			% Ekstra matematikkfunksjoner.
+%\usepackage{siunitx}					% Må inkluderes for blant annet å få tilgang til kommandoen \SI (korrekte måltall med enheter)
+%	\sisetup{exponent-product = \cdot}      	% Prikk som multiplikasjonstegn (i steden for kryss).
+% 	\sisetup{output-decimal-marker  =  {,}} 	% Komma som desimalskilletegn (i steden for punktum).
+% 	\sisetup{separate-uncertainty = true}   	% Pluss-minus-form på usikkerhet (i steden for parentes). 
+\usepackage{booktabs}                     		% For å få tilgang til finere linjer (til bruk i tabeller og slikt).
+\usepackage[font=small,labelfont=bf]{caption}	% For justering av figurtekst og tabelltekst.
+
+\makeatletter
+\def\ps@pprintTitle{%
+  \let\@oddhead\@empty
+  \let\@evenhead\@empty
+  \let\@oddfoot\@empty
+  \let\@evenfoot\@oddfoot
+}
+\makeatother
+
+\usepackage[utf8]{inputenc}		% gjør slik at vi kan skrive æ,ø,å mm.
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage[noabbrev,capitalize]{cleveref}
+\usepackage{subcaption}
+\usepackage{physics}
+
+% Denne setter navnet på abstract til Sammendrag
+\renewenvironment{abstract}{\global\setbox\absbox=\vbox\bgroup
+\hsize=\textwidth\def\baselinestretch{1}%
+\noindent\unskip\textbf{Abstract}
+\par\medskip\noindent\unskip\ignorespaces}
+{\egroup}
+
+
+% Disse kommandoene kan gjøre det enklere for LaTeX å plassere figurer og tabeller der du ønsker.
+\setcounter{totalnumber}{5}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\floatpagefraction}{0.35}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\begin{frontmatter}
+\title{TFY4235 - The World of Quantum Mechanics}
+
+\author[fysikk]{Karl Kristian Ladegård Lockert}
+\address[fysikk]{Institutt for fysikk, Norges Teknisk-Naturvitenskapelige Universitet, N-7491 Trondheim, Norway.}
+\begin{abstract}
+Abstract
+
+\end{abstract}
+\end{frontmatter}
+
+\input{tex/introduction}
+\input{tex/hamiltonian}
+
+
+\bibliographystyle{unsrt}
+\bibliography{bib}
+
+\end{document}

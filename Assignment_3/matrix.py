@@ -7,7 +7,7 @@ def matrix_box_potential(N, order=4):
     """Sets up the one-dimensional eigenvalue solver
     
     """
-    x = np.ones(N) * N ** order
+    x = np.ones(N) * N ** 2
 
     if order == 2:
         d0 = 2 * x
@@ -49,7 +49,7 @@ def get_coeffs(Psi_0, v):
     inner product, implicitly doing the integral.
     
     Arguments:
-        psi {Array} -- [Fully constructed \Psi_0]
+        Psi_0 {Array} -- [Initial wave (packet)]
         v {Array} -- [description]
     
     Returns:

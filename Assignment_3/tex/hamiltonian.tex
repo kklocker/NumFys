@@ -1,0 +1,48 @@
+\section{The Hamiltonian}
+
+The Schrödinger equation tells us the time-evolution of the wave function, which, according to the Copenhagen interpretation of quantum mechanics, has the physical interpretation of a probability amplitude when squaring the absolute value. In our current setup, where we have
+\begin{equation} 
+V = \begin{cases}
+0,\quad 0<x<L \\
+\infty,\quad \text{otherwise}
+\end{cases},
+\end{equation}
+there is 0\% chance of finding the particle inside the ``walls'' (at $x<0$ or $x> L$). Thus, the wave function must go to zero at these points. Defining $x' = x/L$ and $t'=t/t_0$, and inserting in \cref{eq:SE}.
+\begin{align*} 
+i\hbar\pdv{\psi}{t} &= i\hbar\pdv{\psi}{t'}\pdv{t'}{t}= \frac{-\hbar^2}{2mL^2}\pdv[2]{\psi}{{x'}}\\
+\implies i\pdv{\psi}{t'} &= \frac{-\hbar}{2mL^2 \pdv{t'}{t}}\pdv{\psi}{x'^2}
+\end{align*}
+Thus, setting
+\begin{equation}
+t' = \frac{\hbar}{2mL^2}t,\quad x' = \frac{x}{L}
+\end{equation}
+gives the wanted dimensionless equation
+\begin{equation}
+\label{eq:SE_dimensionless}
+i\pdv{\psi}{t'} = -\pdv[2]{\psi}{{x'}}
+\end{equation}
+Inserting our new variables in \cref{eq:TISE} with \[H = \frac{\hat p^2}{2m} + V(x) =  -\frac{-\hbar}{2mL^2} \pdv[2]{{x'}} + \tilde{V}(x')\], we get
+\begin{align} 
+\frac{-\hbar^2}{2mL^2}\pdv[2]{\psi_n}{{x'}} &= E_n\psi_n \implies \nonumber\\
+\label{eq:eig}
+-\pdv[2]{\psi_n}{{x'}} &= \lambda_n\psi_n,
+\end{align}
+with the relation 
+\begin{equation} 
+\lambda_n = \frac{2mL^2 E_n}{\hbar^2}
+\end{equation}
+between the energy levels and the dimensionless eigenvalues. The boundary conditions that the wave function disappears in the walls, but the walls are now at $x' = 0$ and $x' = 1$. It is now clear that choosing $x_0 = L$ is suitable, as it makes us able to work on the simple domain $[0,1]$. Any other proportionality constant $\alpha\in \mathbb{R}$ such that $x' = \alpha x/ L$ should work as well, scaling both the time and energies by a factor $\alpha^2 $, as long as $x'$ is dimensionless. Other scaling possibilites are also possible, and have consequences for the analytic expressions for $\psi$. For example scaling the interval to be mirrored about $x = 0$ would only pick out the even terms in a Fourier series expansion.
+
+Solving \cref{eq:eig} with the imposed boundary conditions can be done analytically in the following manner.
+Since we are looking for solutions that have self-similar second derivatives with an extra minussign, we guess a solution on the form 
+$\psi = A_n\sin(\sqrt{\lambda_n}x') + B_n\cos(\sqrt{\lambda_n}x')$. The boundary condition $\psi(x'=0) = 0$ gives $B_n = 0$, while the boundary condition $\psi(x'=1) = 0$ gives the restriction to $\lambda_n$ that $\sqrt{\lambda_n} = n\pi$, hence the labels $n$ are also justified. Our analytic solution is therefore 
+\begin{equation}
+\psi_n(x') = \mathcal{N}\sin(\pi n x'),
+\end{equation} 
+where $\mathcal{N}$ is a normalization constant to be decided.
+\begin{align*} 
+1 &= \braket{\psi_n}{\psi_n} = \mathcal{N}^2\int_{0}^{1}\dd{x'}\sin[2](n\pi x') \\
+&=\mathcal{N}^2\int_0^1\dd{x'}\frac{1-\cos(2\pi n x')}{2}
+= \frac{\mathcal{N}^2}{2} \\
+&\implies \mathcal{N} = \sqrt{2}.
+\end{align*}
