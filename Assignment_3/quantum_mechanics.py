@@ -1,9 +1,12 @@
 from scipy.sparse import diags
-from scipy.sparse.linalg import eigsh
 import numpy as np
 from numba import jit
+from dask import delayed, compute
+
+import utils
 
 
+@jit
 def matrix_box_potential(N, order=4, v=None):
     """Sets up the one-dimensional eigenvalue solver
     
@@ -43,12 +46,29 @@ def matrix_box_potential(N, order=4, v=None):
     return A
 
 
-def solve_egenvalues(H):
+def solve_eigenvalues(H, N):
     # e, v = eigsh(H, k=(H.shape[0] - 1), which="LM")
     e, v = np.linalg.eigh(H.toarray())
-    np.save("eigsh/eigenvalue", e)
-    np.save("eigsh/eigenvectors", v)
+
+    utils.save_e(e, N)
+    utils.save_v(v, N)
     return e, v
+
+
+def parallellize_solver(Nmin, Nmax, N):
+    """Solves N eigenvalue problems with discretization points 1/Nmin to 1/Nmax
+
+    """
+    N_list = np.linspace(Nmin, Nmax, N, dtype=int)
+
+    delayed_list = []
+    for n in N_list:
+        H = delayed(matrix_box_potential)(n)
+        res = delayed(solve_eigenvalues)(H, n)
+        delayed_list.append(res)
+
+    compute(*delayed_list)
+    return
 
 
 def get_coeffs(Psi_0, v):
@@ -71,19 +91,24 @@ def psi(e, v, psi_0, t):
     return (cn * np.exp(-1j * e * t)) @ v
 
 
-@jit
-def error_metric(psi_list, psi_analytic_list):
-    """Gives a metric for the error between 
+# @jit
+def error_metric(psi, psi_analytic):
+    """Gives a metric for the error between
     computed and analytic wave-functions
     
     """
-    n = psi_list.shape[0]
-    e = np.zeros(n)
-    for i in range(len(psi_list)):
-        psi_diff = psi_list[i] - psi_analytic_list[i]
-        e[i] = psi_diff @ psi_diff
-
+    psi_diff = np.abs(psi) - np.abs(psi_analytic)
+    e = psi_diff @ psi_diff
     return e
+
+
+@jit
+def errors():
+    for N in 10 ** np.linspace(0, 4, dtype=int):
+        H = matrix_box_potential(N)
+        e, v = solve_eigenvalues(H, N)
+
+        v = np.sqrt(N) * v
 
 
 @jit
