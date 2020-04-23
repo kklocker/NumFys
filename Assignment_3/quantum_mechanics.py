@@ -1,127 +1,128 @@
 from scipy.sparse import diags
+from scipy.integrate import simps
 import numpy as np
 from numba import jit
 from dask import delayed, compute
 
 import utils
+from plot_functions import *
 
 
-@jit
-def matrix_box_potential(N, order=4, v=None):
-    """Sets up the one-dimensional eigenvalue solver
-    
-    """
-    x = np.ones(N) * N ** 2
+class WaveFunction:
+    def __init__(self, N, V=None):
+        if V is not None:
+            try:
+                if len(V) != N:
+                    print("The potential must be discretized in N points!")
+                    raise RuntimeError
+            except Exception as e:
+                print(e)
+                raise e
 
-    if order == 2:
-        d0 = 2 * x
-        d1 = -x[:-1]
-        if v is not None:
-            d0 += v
-        A = diags([d1, d0, d1], [-1, 0, 1], dtype=complex)
+        self.N = N  # discretization points
+        self.V = V  # Potential
+        self.psi_constructed = False
+        self.potential_strength = max(V) if V is not None else None
+        self.initial_state_set = False
 
-    elif order == 4:
+    def construct_hamiltonian(self, order=4):
+        """Sets up the one-dimensional eigenvalue 
+        discrete Hamiltonian (with or without a potential)
+        
+        """
+        N = self.N
+        v = self.V
+        x = np.ones(N) * N ** 2
 
-        d0 = 5 * x / 2
-        if v is not None:
-            d0 += v
-        d1 = -4 * x[:-1] / 3
-        d2 = x[:-2] / 12
+        if order == 2:
+            d0 = 2 * x
+            d1 = -x[:-1]
+            if v is not None:
+                d0 += v
+            H = diags([d1, d0, d1], [-1, 0, 1], dtype=complex)
 
-        A = diags([d2, d1, d0, d1, d2], [-2, -1, 0, 1, 2], dtype=complex)
+        elif order == 4:
 
-    elif order == 6:
-        d0 = 49 * x / 18
-        if v is not None:
-            d0 += v
-        d1 = -3 * x[:-1] / 2
-        d2 = 3 * x[:-2] / 20
-        d3 = -x[:-3] / 90
+            d0 = 5 * x / 2
+            if v is not None:
+                d0 += v
+            d1 = -4 * x[:-1] / 3
+            d2 = x[:-2] / 12
 
-        A = diags([d3, d2, d1, d0, d1, d2, d3], [-3, -2, -1, 0, 1, 2, 3], dtype=complex)
+            H = diags([d2, d1, d0, d1, d2], [-2, -1, 0, 1, 2], dtype=complex)
 
-    else:
-        raise NotImplementedError
+        elif order == 6:
+            d0 = 49 * x / 18
+            if v is not None:
+                d0 += v
+            d1 = -3 * x[:-1] / 2
+            d2 = 3 * x[:-2] / 20
+            d3 = -x[:-3] / 90
 
-    return A
+            H = diags(
+                [d3, d2, d1, d0, d1, d2, d3], [-3, -2, -1, 0, 1, 2, 3], dtype=complex
+            )
 
+        else:
+            raise NotImplementedError
 
-def solve_eigenvalues(H, N):
-    # e, v = eigsh(H, k=(H.shape[0] - 1), which="LM")
-    e, v = np.linalg.eigh(H.toarray())
+        self.H = H
 
-    utils.save_e(e, N)
-    utils.save_v(v, N)
-    return e, v
+    def solve_eigenvalues(self):
+        # e, v = eigsh(H, k=(H.shape[0] - 1), which="LM")
+        e, v = np.linalg.eigh(self.H.toarray())
 
+        utils.save_e(e, self.N)
+        utils.save_v(v, self.N)
+        self.e = e  # Eigenvalues
+        self.v = v  # Eigenvectors
 
-def parallellize_solver(Nmin, Nmax, N):
-    """Solves N eigenvalue problems with discretization points 1/Nmin to 1/Nmax
+    def parallellize_solver(self, Nmin, Nmax, N):
+        """Solves N eigenvalue problems
+        with discretization points 1/Nmin to 1/Nmax
+        Used for solving many systems and investigation of
+        how the problem scale as the discretization
+        step is changeda
+        """
+        N_list = np.linspace(Nmin, Nmax, N, dtype=int)
 
-    """
-    N_list = np.linspace(Nmin, Nmax, N, dtype=int)
+        delayed_list = []
+        for n in N_list:
+            H = delayed(self.construct_hamiltonian)(n)
+            res = delayed(self.solve_eigenvalues)(H, n)
+            delayed_list.append(res)
 
-    delayed_list = []
-    for n in N_list:
-        H = delayed(matrix_box_potential)(n)
-        res = delayed(solve_eigenvalues)(H, n)
-        delayed_list.append(res)
+        compute(*delayed_list)
+        return
 
-    compute(*delayed_list)
-    return
+    def construct_psi(self, psi_0, t):
+        """
+        Creates the full wavefunction as a linear combination of stationary states.
+        """
+        v = np.sqrt(self.N) * self.v
+        cn = utils.inner_product(psi_0, v)
+        self.cn = cn
+        self.psi = (cn * np.exp(-1j * self.e * t[:, None])) @ v.T
+        self.psi_constructed = True
 
+    def set_initial_state(self, psi0):
 
-def get_coeffs(Psi_0, v):
-    """Gets the coefficient by taking the 
-    inner product, implicitly doing the integral.
-    
-    Arguments:
-        Psi_0 {Array} -- [Initial wave (packet)]
-        v {Array} -- [description]
-    
-    Returns:
-        [type] -- [description]
-    """
-    cn = v.T @ Psi_0
-    return cn
+        N = utils.inner_product(psi0, psi0)
+        self.psi0 = psi0 / (np.sqrt(N))
+        print(
+            f"Initial state set. Normalization: {utils.inner_product(self.psi0, self.psi0)}"
+        )
+        self.initial_state_set = True
 
+    def euler(self, N_temporal, dt):
+        """
+        Invokes the Euler-scheme for computing the time evolution of an initial state
+        """
+        if not self.initial_state_set:
+            print("Initial state not set!")
+            raise RuntimeError
+        psi = utils.euler_scheme(self.H.toarray(), N_temporal, dt, self.psi0)
+        self.psi_euler = psi
 
-def psi(e, v, psi_0, t):
-    cn = get_coeffs(psi_0, v)
-    return (cn * np.exp(-1j * e * t)) @ v
-
-
-# @jit
-def error_metric(psi, psi_analytic):
-    """Gives a metric for the error between
-    computed and analytic wave-functions
-    
-    """
-    psi_diff = np.abs(psi) - np.abs(psi_analytic)
-    e = psi_diff @ psi_diff
-    return e
-
-
-@jit
-def errors():
-    for N in 10 ** np.linspace(0, 4, dtype=int):
-        H = matrix_box_potential(N)
-        e, v = solve_eigenvalues(H, N)
-
-        v = np.sqrt(N) * v
-
-
-@jit
-def f(N, v0):
-    """Returns the analytic eigenvectors of 
-    the Hamiltonian with energies 0<lambda<v0
-    
-    """
-    la = np.linspace(0, v0, N)
-
-    k = np.sqrt(la)
-    ka = np.sqrt(v0 - la)
-    return (
-        np.exp(ka / 3) * (ka * np.sin(k / 3) + k * np.cos(k / 3)) ** 2
-        - np.exp(-ka / 3) * (ka * np.sin(k / 3) - k * np.cos(k / 3)) ** 2
-    )
+    def __repr__(self):
+        return f"{type(self)}\nN: {self.N}, Constructed psi: {self.psi_constructed}"

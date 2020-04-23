@@ -7,4 +7,24 @@ J.~T. Kjellstadli, A.~Sala, and I.~Simonsen.
   \url{http://web.phys.ntnu.no/~ingves/Teaching/TFY4235/Assignments/TFY4235_Assignment_03.pdf},
   2020.
 
+\bibitem{hemmer1985kvantemekanikk}
+Per~Christian Hemmer.
+\newblock {\em Kvantemekanikk}.
+\newblock Tapir Akademiske Forlag, 5 edition, 2005.
+
+\bibitem{2020SciPy-NMeth}
+Pauli {Virtanen}, Ralf {Gommers}, Travis~E. {Oliphant}, Matt {Haberland}, Tyler
+  {Reddy}, David {Cournapeau}, Evgeni {Burovski}, Pearu {Peterson}, Warren
+  {Weckesser}, Jonathan {Bright}, St{\'e}fan~J. {van der Walt}, Matthew
+  {Brett}, Joshua {Wilson}, K.~{Jarrod Millman}, Nikolay {Mayorov}, Andrew
+  R.~J. {Nelson}, Eric {Jones}, Robert {Kern}, Eric {Larson}, CJ~{Carey},
+  {\.I}lhan {Polat}, Yu~{Feng}, Eric~W. {Moore}, Jake {Vand erPlas}, Denis
+  {Laxalde}, Josef {Perktold}, Robert {Cimrman}, Ian {Henriksen}, E.~A.
+  {Quintero}, Charles~R {Harris}, Anne~M. {Archibald}, Ant{\^o}nio~H.
+  {Ribeiro}, Fabian {Pedregosa}, Paul {van Mulbregt}, and SciPy 1.~0
+  {Contributors}.
+\newblock {SciPy 1.0: Fundamental Algorithms for Scientific Computing in
+  Python}.
+\newblock {\em Nature Methods}, 17:261--272, 2020.
+
 \end{thebibliography}
