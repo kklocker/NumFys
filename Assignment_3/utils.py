@@ -145,9 +145,11 @@ def euler_scheme(H, N_temporal, dt, initial_state):
     dt: time step
     initial_state: Normalized inital state
     """
-    N = initial_state.shape[0]
-    psi = np.zeros(N_temporal, N)
-    psi[0] = initial_state
+    current = initial_state
     for n in range(1, N_temporal):
-        psi[n] = psi[n - 1] - 1j * dt * (H @ psi[n - 1])
-    return psi
+        current = current - 1j * dt * (H @ current)
+    return current
+
+def crank_nicolson_scheme(H):
+
+        

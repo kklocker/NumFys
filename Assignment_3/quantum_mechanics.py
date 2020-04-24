@@ -1,5 +1,6 @@
 from scipy.sparse import diags
 from scipy.integrate import simps
+from scipy.linalg import lu_factor, lu_solve
 import numpy as np
 from numba import jit
 from dask import delayed, compute
@@ -123,6 +124,16 @@ class WaveFunction:
             raise RuntimeError
         psi = utils.euler_scheme(self.H.toarray(), N_temporal, dt, self.psi0)
         self.psi_euler = psi
+
+    def factor_lu(self):
+        self.lu = lu_factor(self.H.toarray())
+
+    def crank_nicolson(self, N_temporal, dt):
+        """
+        Invokes the Crank-Nicolson for computing the time evolution of an initial state. 
+        """
+
+        self.psi_crank = 
 
     def __repr__(self):
         return f"{type(self)}\nN: {self.N}, Constructed psi: {self.psi_constructed}"
