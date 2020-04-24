@@ -4,7 +4,7 @@ from numba import jit, njit
 from scipy.optimize import root
 from scipy.linalg import lu_factor, lu_solve
 
-HBAR = 1.05e-34
+HBAR = 1.0
 
 
 def get_n_list():
@@ -193,8 +193,8 @@ def two_level_hamiltonian(e, t):
 def interaction_hamiltonian(ep, omega, tau, t):
     return np.array(
         [
-            [0, np.exp(-1j * ep * t / HBAR) * tau * np.sin(omega * t)],
-            [np.exp(1j * ep * t / HBAR) * tau * np.sin(omega * t), 0],
+            [0.0, np.exp(-1j * ep * t / HBAR) * tau * np.sin(omega * t / HBAR),],
+            [np.exp(1j * ep * t / HBAR) * tau * np.sin(omega * t / HBAR), 0.0,],
         ]
     )
 
@@ -203,3 +203,16 @@ def interaction_hamiltonian(ep, omega, tau, t):
 def p(t, tau):
     return np.sin(t * tau / (2 * HBAR)) ** 2
 
+
+def two_level_evolve(psi0, dt, N_temporal, ep, omega, tau):
+    psi = []
+    for i in range(N_temporal):
+        s = np.array([0.0 + 0j, 0 + 0j])
+        for j, p in enumerate(psi):
+            h_temp = interaction_hamiltonian(ep, omega, tau, dt * j)
+            if j == 0 or j == (len(psi) - 1):
+                h_temp = 2 * h_temp
+            s = s + h_temp @ p
+        temp_psi = psi0 - 1j * dt * s / HBAR
+        psi.append(temp_psi)
+    return psi

@@ -53,7 +53,9 @@
 \author[fysikk]{Karl Kristian Ladegård Lockert}
 \address[fysikk]{Institutt for fysikk, Norges Teknisk-Naturvitenskapelige Universitet, N-7491 Trondheim, Norway.}
 \begin{abstract}
-Abstract
+When implementing different methods for solving the Schrödinger equation, we investigate the results and possible errors for three different systems, starting with a particle in a box. The computed energy eigenvalues are in good agreement with the analytic results for lower energies.  Introducing a potential barrier to the box, a tunneling phenomena occurs when preparing an initial 
+state out of (almost) degenerate states and propagating over a suitable time span. 
+Propagating the same initial state with the Crank-Nicolson scheme gives zero tunneling in the same time interval as in the plane-wave basis. The Euler-scheme is found unfit, attributed to the requirement of $H$ being unitary, which is not fulfilled. A relationship between the number of steps we are able to calculate (in the Euler scheme) and the discretization size, both spatial and temporal, is established. Lastly, a two-level system is studied. A numerical implementation of the time-evolution is presented,and used to compute the transition probabilities between two states. This is a result in good agreement with analytic approximations, with the added decoherence lowering the probability amplitude over time. 
 
 \end{abstract}
 \end{frontmatter}

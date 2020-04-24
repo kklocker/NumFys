@@ -46,3 +46,40 @@ can be computed as the previous inner products, applying first the action of $\h
 	\tau(\nu_r) \simeq -0.429\nu_r.
 \end{equation}
 
+Let us next discretize the Volterra integral equation
+\begin{equation} 
+\ket{\psi(t=k\Delta t)}_I = \ket{\psi(0)} -\frac{i}{\hbar}\int_0^t\dd{t'}H_{1I}(t')\ket{\psi(t')}_I
+\end{equation}
+using the Trapezoidal rule
+\begin{equation} 
+\int_0^tf(t)\dd{t} \simeq \sum_{k=1}^{N}\frac{f((k-1)\Delta t)+f(k\Delta t)}{2}\Delta t.
+\end{equation}
+We get
+\begin{align*} 
+\ket{0} = &\ket{0} \\
+\ket{\Delta t} = &\ket{0} - \frac{i}{\hbar}\Delta t H(0)\ket{0} \\
+\ket{2\Delta t} = &\ket{0} - \frac{i}{\hbar}\Delta t \left(H(0)\ket{0} + H(\Delta t)\ket{\Delta t}\right) \\
+&\vdots \\
+\ket{n\Delta t} = &\ket{0}-\frac{i}{\hbar}\Delta t\left(\sum_{k=1}^{n-2}H(k\Delta t)\right. \\ 
+&\qquad+ \left.\frac{H(0)\ket{0} + H((n-1)\Delta t)\ket{(n-1)\Delta t}}{2}\vphantom{(\sum_{k=1}^{n-2}}\right).
+\end{align*}
+The implementation of this discretization could be done by clever matrix manipulations. It could also be done with a simpler implementation, looping over all states previously calculated. This is a more ``brute-force'' way of doing it, but works.
+\begin{figure}
+	\centering
+	\includegraphics[width=\linewidth]{img/transition_prob.png}
+	\caption{The probability of finding the system in the first excited state, $\ket{e_0}$.}
+	\label{fig:trans}
+\end{figure}
+In \cref{fig:trans} a comparison of the implementation and an approximate solution for the probability of finding $\ket{e_0}$ given that the system was initially in $\ket{\Psi(t=0)} = \ket{g_0}$. This was done for $\omega = \varepsilon_0$ and $\tau = 0.02\varepsilon_0$. Notice the decoherence that occur in the computed probability, not present in the analytic expression\cite{assignment}
+\begin{equation} 
+p(t) = \sin[2](\frac{t\tau}{2\hbar}).
+\end{equation}
+If we now vary $\omega$ and $\tau$, we may notice the following. Setting $\omega \ne \varepsilon_0$ will lower the probability of finding the system in the state $\ket{e_0}$, and shifting the peaks. Increasing $\tau$ does not seem to alter the amplitude of the probability, but shifts the peaks to earlier times. This is visualized in \cref{fig:probs}, where secondary oscillations are more pronounced than in \cref{fig:trans}. 
+\begin{figure}
+	\centering
+	\includegraphics[width=\linewidth]{img/stuff.pdf}
+	\caption{The transition probability $|\braket{g_0}{\psi(t)}|^2$ of three different configurations. }
+	\label{fig:probs}
+\end{figure}
+If we choose $\tau$ too large, the method breaks down. This is clear from an interpretation of $\tau$ as a perturbation smallness parameter, in which a perturbation series would diverge for  $\tau>1$. 
+
