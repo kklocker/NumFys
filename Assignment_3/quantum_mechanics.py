@@ -1,10 +1,9 @@
+# External libraries
 from scipy.sparse import diags
-from scipy.integrate import simps
-from scipy.linalg import lu_factor, lu_solve
 import numpy as np
-from numba import jit
 from dask import delayed, compute
 
+# Own libraries
 import utils
 from plot_functions import *
 
@@ -25,6 +24,7 @@ class WaveFunction:
         self.psi_constructed = False
         self.potential_strength = max(V) if V is not None else None
         self.initial_state_set = False
+        self.psi_euler = None
 
     def construct_hamiltonian(self, order=4):
         """Sets up the one-dimensional eigenvalue 
@@ -117,23 +117,37 @@ class WaveFunction:
 
     def euler(self, N_temporal, dt):
         """
-        Invokes the Euler-scheme for computing the time evolution of an initial state
+        Invokes the Euler-scheme for computing the time 
+        evolution of an initial state
         """
         if not self.initial_state_set:
             print("Initial state not set!")
             raise RuntimeError
-        psi = utils.euler_scheme(self.H.toarray(), N_temporal, dt, self.psi0)
+
+        if self.psi_euler is not None:
+            psi = utils.euler_scheme(self.H.toarray(), N_temporal, dt, self.psi_euler)
+        else:
+            psi = utils.euler_scheme(self.H.toarray(), N_temporal, dt, self.psi0)
         self.psi_euler = psi
 
-    def factor_lu(self):
-        self.lu = lu_factor(self.H.toarray())
+    def reset_euler(self):
+        self.psi_euler = None
+
+    # def factor_lu(self):
+    # self.lu = lu_factor(self.H.toarray())
 
     def crank_nicolson(self, N_temporal, dt):
         """
-        Invokes the Crank-Nicolson for computing the time evolution of an initial state. 
+        Invokes the Crank-Nicolson for computing the
+         time evolution of an initial state. 
         """
 
-        self.psi_crank = 
+        if not self.initial_state_set:
+            print("Initial state not set!")
+            raise RuntimeError
+        self.psi_crank = utils.crank_nicolson_scheme(
+            self.H.toarray(), self.psi0, dt, N_temporal
+        )
 
     def __repr__(self):
         return f"{type(self)}\nN: {self.N}, Constructed psi: {self.psi_constructed}"

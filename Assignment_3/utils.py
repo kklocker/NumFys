@@ -2,6 +2,9 @@ import os
 import numpy as np
 from numba import jit, njit
 from scipy.optimize import root
+from scipy.linalg import lu_factor, lu_solve
+
+HBAR = 1.05e-34
 
 
 def get_n_list():
@@ -76,13 +79,6 @@ def error_metric(psi, psi_analytic):
 def inner_product(Psi_0, Psi_1):
     """Gets the coefficient by taking the 
     inner product, implicitly doing the integral.
-    
-    Arguments:
-        Psi_0 {Array} -- [Initial wave (packet)]
-        v {Array} -- [description]
-    
-    Returns:
-        [type] -- [description]
     """
     cn = Psi_1.T.conj() @ Psi_0
     return cn / Psi_0.shape[0]
@@ -100,21 +96,22 @@ def dirac_delta(N):
 
 
 @njit
-def box_potential(N, v):
+def box_potential(N, v, vr=0):
     """
     Sets up a box-potential of strength v, discretized by N points
     """
     V = np.zeros(N)
     x = np.linspace(0, 1, N)
     V[(x < (2 / 3)) & (x > (1 / 3))] = v
+    if vr != 0:
+        V[(x > (2 / 3))] = vr
     return V
 
 
 @njit
 def f(lambda_list, v0):
-    """Returns the analytic eigenvectors of 
+    """Returns the analytic eigenvectors of
     the Hamiltonian with energies 0<lambda<v0
-    
     """
 
     k = np.sqrt(lambda_list)
@@ -127,9 +124,9 @@ def f(lambda_list, v0):
 
 def find_roots(E, v0):
     """
-    Finds the roots of the 
-    function f(lambda) based 
-    on the computed eigenvalues E 
+    Finds the roots of the
+    function f(lambda) based
+    on the computed eigenvalues E
     and an upper limit for the potential v0.
     """
     e = E[E <= v0]
@@ -146,10 +143,63 @@ def euler_scheme(H, N_temporal, dt, initial_state):
     initial_state: Normalized inital state
     """
     current = initial_state
-    for n in range(1, N_temporal):
+    for n in range(N_temporal):
         current = current - 1j * dt * (H @ current)
     return current
 
-def crank_nicolson_scheme(H):
 
-        
+def crank_nicolson_scheme(H, psi0, dt, N_temporal):
+    """
+    Sets up LU-decomposition of lhs ans solves a system of equations. 
+    Discards intermediate solutions
+    """
+    N = psi0.shape[0]
+    rhs = np.identity(N) - 1j / 2 * dt * H
+    lhs = np.identity(N) + 1j / 2 * dt * H
+
+    lu, piv = lu_factor(lhs)
+    print("Lu done")
+    psi = psi0.copy()
+
+    for n in range(N_temporal):
+        b = rhs @ psi
+        psi = lu_solve((lu, piv), b)
+    return psi
+
+
+def ev_H(H, vr):
+    """ 
+    Returns operator for calculating expectation value
+    of hamiltonian + vr. 
+    
+    The matrix element <v1|H+v|v2> is 
+    then called by utils.inner_product(op@v2, v1)
+
+    """
+    N = H.shape[0]
+    x = np.linspace(0, 1, N)
+    v = np.zeros(N)
+    v[(x > (2 / 3))] = vr
+
+    op = H + v * np.eye(N)
+    return op
+
+
+def two_level_hamiltonian(e, t):
+    return np.array([[-e / 2, t], [t, e / 2]])
+
+
+@njit
+def interaction_hamiltonian(ep, omega, tau, t):
+    return np.array(
+        [
+            [0, np.exp(-1j * ep * t / HBAR) * tau * np.sin(omega * t)],
+            [np.exp(1j * ep * t / HBAR) * tau * np.sin(omega * t), 0],
+        ]
+    )
+
+
+@njit
+def p(t, tau):
+    return np.sin(t * tau / (2 * HBAR)) ** 2
+
