@@ -1,5 +1,3 @@
-solutions/
-Assignment_2/simulations/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -482,3 +480,14 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+
+
+
+###########################################################################################
+Assignment_3/TFY4235_Assignment_03.pdf
+solutions/
+Assignment_2/simulations/
+Assignment_3/.vscode/
+Assignment_3/eigsh/
+

@@ -1,0 +1,20 @@
+\section{Introduction}
+This assignment on ``The World of Quantum Mechanics'' is about different methods for computing properties of different quantum systems. 
+We will investigate numerical solutions of different one-dimensional quantum mechanical systems,  all described by the Schrödinger equation
+\begin{equation}\label{eq:SE}
+i\hbar\pdv{\psi}{t} = H\psi.
+\end{equation}
+Starting with a particle in a box, we succsessfully express the full wave function as a linear combination of \textit{instantaneous} eigenstates. These are solutions of the time-independent Schrödinger equation
+\begin{equation} 
+\label{eq:TISE}
+H\psi_n = E_n\psi_n.
+\end{equation}
+Introducing a potential barrier to the box, a tunneling phenomena occurs when preparing an initial state out of (almost) degenerate states,  and propagating this state over a suitable time span. 
+For numerical evolution in time, two schemes are implemented. Both Euler, and Crank-Nicolson are able to reproduce the results obtained in the expansion of eigenstates, but the Euler-scheme requires a far finer discretization than what is computationally feasible. 
+For a third system, presented with a time-dependent Hamiltonian, we discretize the Volterra integral equation for the formal solution of \cref{eq:SE}.
+ 
+All of the implementations are written in Python 3.7, with heavy utilization of optimized libraries. 
+These libraries include SciPy for linear algebra, NumPy for array manipulations and vectorization, dask for parallellization of multiple solvers at once, and Numba for ``just-in-time''-compilation of functions. 
+ 
+The treatment of the problems will be done in reduces units. 
+Throughout the report, quantities with a bar ($\bar A$) that may have an analytic counterpart ($A$),  will represent quantities which are (to be) computed where it is not clear. 

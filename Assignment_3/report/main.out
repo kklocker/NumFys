@@ -1,0 +1,8 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Quantum mechanics in a box}{}% 2
+\BOOKMARK [1][-]{section.3}{Adding a barrier to the box-potential}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{Root finding}{section.3}% 4
+\BOOKMARK [1][-]{section.4}{Step-by-step time evolution}{}% 5
+\BOOKMARK [2][-]{subsection.4.1}{Euler scheme}{section.4}% 6
+\BOOKMARK [2][-]{subsection.4.2}{Crank-Nicolson}{section.4}% 7
+\BOOKMARK [2][-]{subsection.4.3}{Two level system}{section.4}% 8
