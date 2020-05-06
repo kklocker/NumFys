@@ -13,9 +13,9 @@ from lattice_utils import (
 
 @njit
 def ising_hamiltonian(lattice, J=1.0, boundary_cond="mj"):
-    """Computes the energy of the Ising Hamiltonian of a square lattice. 
+    """
+    Computes the energy of the Ising Hamiltonian of a square lattice. 
     
-
     Timings:
         NxN:        Time:
             10x10:  2.09 µs ± 67.4 ns 
