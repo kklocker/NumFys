@@ -179,7 +179,7 @@ def metropolis_mj_2(N_size, N_sweeps, T, skips=50, N_runs=10, bc="mj"):
         prev = 0  # keeps track of last sampled state
         for i in range(N_sweeps):  # Do N_sweep, bc=bc sweeps.
             if i == 0:
-                for j in range(max(50, skips)):
+                for _ in range(max(50, skips)):
                     metropolis_subroutine(lattice, T, bc=bc)  # Tries to flip N^2 spins
             if i >= (prev + skips):
                 prev = i  # Keeps track of index of current sample
@@ -221,3 +221,19 @@ def get_tau(N_size, N_sweeps, T, N_runs=10, skips=10, bc="mj"):
         )
         tau[i] = -np.log(mean) * T[i] / N_size
     return tau
+
+
+@njit
+def get_tau_scaling(N_list, T, N_sweeps, N_runs=1, skips=3, bc="torus"):
+    """
+    Returns matrix of tau-scalings for different N and different T
+    """
+
+    Ln = N_list.shape[0]
+    Lt = T.shape[0]
+    tau_matrix = np.zeros((Ln, Lt))
+
+    for i in range(Ln):
+        tau_matrix[i, :] = get_tau(N_list[i], N_sweeps, T, N_runs, skips=skips, bc=bc)
+
+    return tau_matrix
