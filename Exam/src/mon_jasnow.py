@@ -2,7 +2,13 @@ import numpy as np  # Array manipulation at C-speed
 from numba import njit  # Compile functions at first excecution.
 
 # from dask import delayed, compute
-from lattice_utils import get_flip_energy, get_lattice_pp, get_lattice_pm, energy_diff
+from lattice_utils import (
+    get_flip_energy,
+    get_lattice_pp,
+    get_lattice_pm,
+    energy_diff,
+    basic_lattice,
+)
 
 
 @njit
@@ -35,27 +41,12 @@ def ising_hamiltonian(lattice, J=1.0, boundary_cond="mj"):
         for i in range(1, nx - 1):
             for j in range(ny):
                 si = lattice[i, j]
-
-                if i == 0:
-                    H -= si * (
-                        lattice[i, (j - 1) % ny]
-                        + lattice[i, (j + 1) % ny]
-                        + lattice[i + 1, j]
-                    )
-                elif i == nx - 1:
-                    H -= si * (
-                        lattice[i, (j - 1) % ny]
-                        + lattice[i, (j + 1) % ny]
-                        + lattice[i - 1, j]
-                    )
-
-                else:
-                    H -= si * (
-                        lattice[i, (j - 1) % ny]
-                        + lattice[i, (j + 1) % ny]
-                        + lattice[(i - 1), j]
-                        + lattice[(i + 1), j]
-                    )
+                H -= si * (
+                    lattice[i, (j - 1) % ny]
+                    + lattice[i, (j + 1) % ny]
+                    + lattice[(i - 1), j]
+                    + lattice[(i + 1), j]
+                )
         return H * J / 2
     elif boundary_cond == "torus":
         for i in range(nx):
@@ -96,6 +87,8 @@ def ising_hamiltonian(lattice, J=1.0, boundary_cond="mj"):
                         + lattice[(i + 1), j]
                     )
         return H * J / 2
+    else:
+        raise NotImplementedError
 
 
 @njit
@@ -174,32 +167,31 @@ def metropolis_mj_2(N_size, N_sweeps, T, skips=50, N_runs=10, bc="mj"):
     * Computes energy difference
     * appends to list
     * Compute mean and std.
+
     """
 
     ev = []  # List for storing expectation value
     for run in range(N_runs):
-        lattice_pp = get_lattice_pp(N_size, aligned=True)  # Create ++ -lattice
+        if bc == "mj":
+            lattice = get_lattice_pp(N_size, aligned=True)  # Create ++ -lattice
+        else:
+            lattice = basic_lattice(N_size)
         prev = 0  # keeps track of last sampled state
-        for i in range(N_sweeps):  # Do N_sweep sweeps
-
-            metropolis_subroutine(lattice_pp, T, bc=bc)  # Tries to flip N^2 spins.
-
-            if (i > max(50, skips)) and (
-                i >= (prev + skips)
-            ):  # Do at least 50 Initial sweeps, and skip sweeps between each sample
+        for i in range(N_sweeps):  # Do N_sweep, bc=bc sweeps.
+            if i == 0:
+                for j in range(max(50, skips)):
+                    metropolis_subroutine(lattice, T, bc=bc)  # Tries to flip N^2 spins
+            if i >= (prev + skips):
                 prev = i  # Keeps track of index of current sample
-
                 E_diff = energy_diff(
-                    lattice_pp, bc=bc
+                    lattice, bc=bc
                 )  # Computes the energy difference in the hamiltonians
-
                 k = np.exp(-E_diff / T)
-                # if E_diff < 0 and T < (2 / np.log(1 + np.sqrt(2))):
-                # pass
                 if (k == 0.0) or k == np.inf:
                     pass
                 else:
                     ev.append(k)  # Add exp(-(E_{+-} - E_{++})/T) to a list
+            metropolis_subroutine(lattice, T, bc=bc)
     if len(ev) == 0:
         ev.append(
             np.nan
@@ -209,7 +201,7 @@ def metropolis_mj_2(N_size, N_sweeps, T, skips=50, N_runs=10, bc="mj"):
 
 
 @njit
-def get_tau(N_size, N_sweeps, T, N_runs=10, skips=10):
+def get_tau(N_size, N_sweeps, T, N_runs=10, skips=10, bc="mj"):
     """Returns list of computed tau-values
     
     Arguments:
@@ -219,6 +211,13 @@ def get_tau(N_size, N_sweeps, T, N_runs=10, skips=10):
     """
     tau = np.zeros_like(T)
     for i in range(tau.shape[0]):
-        mean, _ = metropolis_mj_2(N_size, N_sweeps, T[i], skips=skips, N_runs=N_runs)
+        mean, _ = metropolis_mj_2(
+            N_size,  # Size of lattice
+            N_sweeps,  # Number of sweeps
+            T[i],  # Temperature at index i
+            skips=skips,  # NUmber of skups between each sample
+            N_runs=N_runs,  # Number of resets
+            bc=bc,  # Boundary conditions
+        )
         tau[i] = -np.log(mean) * T[i] / N_size
     return tau

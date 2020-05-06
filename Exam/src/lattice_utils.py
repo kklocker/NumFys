@@ -33,7 +33,8 @@ def get_lattice_pp(N, aligned=False):
 
 @njit
 def convert_pp_to_pm(lat_pp):
-    """Creates the +- - equivalent of the ++ lattice-
+    """
+    Creates the +- - equivalent of the ++ lattice-
 
     """
     tmp = lat_pp.copy()
@@ -43,6 +44,9 @@ def convert_pp_to_pm(lat_pp):
 
 @njit
 def get_lattice_pm(N):
+    """
+    Get (+-) - lattice
+    """
     lattice = np.random.choice(np.array([-1.0, 1.0]), size=(N + 2, N))
     lattice[0, :] = np.ones(N, dtype=np.float_)
     lattice[N + 1, :] = -np.ones(N, dtype=np.float_)
@@ -71,7 +75,7 @@ def get_flip_energy(i, j, lat, bc="mj"):
         sum_other = lat[i - 1, j] + lat[i + 1, j] + lat[i, j_1] + lat[i, j_2]
 
         return (
-            sp * J * sum_other
+            sp * J * sum_other * 2
         )  # Difference in energy when flipping. Minussign in H accounted for
 
     elif bc == "torus":  # Boundary condition for torus
@@ -108,6 +112,6 @@ def energy_diff(l, bc="mj"):
         return np.sum(l[-2, :]) * 2
 
     elif bc == "torus":
-        return np.sum(np.flip(l[0, :]) * l[-1, :] + l[0, :] * l[-1, :])
+        return np.sum(l[-1, :] * (l[0, ::-1] + l[0, :]))
     else:
         raise NotImplementedError
