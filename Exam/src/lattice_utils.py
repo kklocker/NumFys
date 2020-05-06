@@ -103,13 +103,13 @@ def energy_diff(l, bc="mj"):
 
     Some timings for bc = 'torus:
 
-    N:      Diff by Hamiltonian:        This        Speedup
-    1000    18ms                        3mu s       6000
-    100     205 mu s                    899 ns      228
-    30      55 mu s                     728 ns      75
+    N:      Diff by Hamiltonian:        This        Speedup factor
+    1000    18  ms                      3 µs        6000
+    100     205 µs                    899 ns        228
+    30      55  µs                    728 ns        75
     """
     if bc == "mj":
-        return np.sum(l[-2, :]) * 2
+        return np.sum(l[-2, :]) * 2  # Original Mon -Jasnow
 
     elif bc == "torus":
         return np.sum(l[-1, :] * (l[0, ::-1] + l[0, :]))
