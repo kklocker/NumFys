@@ -3,25 +3,36 @@ from numba import njit  # Compile functions at first excecution.
 
 
 @njit
-def get_lattice_pp(N):
+def basic_lattice(N, aligned=True):
+    """ 
+    Returns a square lattice in an initial state.
+    Default is full magnetization with spin up on all sites
+    """
+
+    if aligned:
+        return np.ones((N, N), dtype=np.float_)
+    else:
+        return np.random.choice(np.array([-1.0, 1.0]), size=(N, N))
+
+
+@njit
+def get_lattice_pp(N, aligned=False):
     """
     Returns lattice with size NxN,
     and extra rows ++.
     For the Mon-Jasnow algorithm.
     """
-
-    lattice = np.random.choice(np.array([-1, 1]), size=(N + 2, N))  # Original lattice
-    lattice[0, :] = np.ones(N)
-    lattice[N + 1, :] = np.ones(N)
-
-    # lattice_pp = np.insert(
-    # lattice, np.array([0, N]), 1, axis=0
-    # )  # Spin up on both edges
+    if aligned:
+        lattice = np.ones((N + 2, N), dtype=np.float_)
+    else:
+        lattice = np.random.choice(np.array([-1.0, 1.0]), size=(N + 2, N))
+        lattice[0, :] = np.ones(N, dtype=np.float_)
+        lattice[N + 1, :] = np.ones(N, dtype=np.float_)
     return lattice
 
 
 @njit
-def get_lattice_pm(lat_pp):
+def convert_pp_to_pm(lat_pp):
     """Creates the +- - equivalent of the ++ lattice-
 
     """
@@ -31,7 +42,15 @@ def get_lattice_pm(lat_pp):
 
 
 @njit
-def get_flip_energy(i, j, lat, J=1.0):
+def get_lattice_pm(N):
+    lattice = np.random.choice(np.array([-1.0, 1.0]), size=(N + 2, N))
+    lattice[0, :] = np.ones(N, dtype=np.float_)
+    lattice[N + 1, :] = -np.ones(N, dtype=np.float_)
+    return lattice
+
+
+@njit
+def get_flip_energy(i, j, lat, bc="mj"):
     """
     (Local Hamilonian)
     Returns integer of sum of nearest spins times the on site spin.
@@ -39,12 +58,56 @@ def get_flip_energy(i, j, lat, J=1.0):
     
     Used for getting the transition probability in metropolis algorithm
     """
-    n = lat.shape[1]  # Original number of points along each direction
+
     sp = lat[i, j]
 
-    j_1 = (j + 1) % n  # PBC y-dir
-    j_2 = (j - 1) % n  # PBC y-dir
+    J = 1.0
+    if bc == "mj":  # Boundary conditions for the original Mon Jasnow Algorithm
+        n = lat.shape[1]  # Original number of points along each direction
 
-    sum_other = lat[i - 1, j] + lat[i + 1, j] + lat[i, j_1] + lat[i, j_2]
+        j_1 = (j + 1) % n  # PBC y-dir
+        j_2 = (j - 1) % n  # PBC y-dir
 
-    return sp * J * sum_other  # * 2  # Difference in energy when flipping
+        sum_other = lat[i - 1, j] + lat[i + 1, j] + lat[i, j_1] + lat[i, j_2]
+
+        return (
+            sp * J * sum_other
+        )  # Difference in energy when flipping. Minussign in H accounted for
+
+    elif bc == "torus":  # Boundary condition for torus
+
+        nx, ny = lat.shape
+        sum_other = (
+            lat[(i - 1) % nx, j]
+            + lat[(i + 1) % nx, j]
+            + lat[i, (j + 1) % ny]
+            + lat[i, (j - 1) % ny]
+        )
+
+        return sp * J * sum_other * 2
+
+
+@njit
+def energy_diff(l, bc="mj"):
+    """
+    Returns either the energy difference 2m_s = H_+- - H-++
+    as in equation (2) in the paper, or the difference Hk - Ht
+    l is the lattice.
+
+    This is to save time by not having to compute the Hamiltonian ( which is of order N^2) 
+
+
+    Some timings for bc = 'torus:
+
+    N:      Diff by Hamiltonian:        This        Speedup
+    1000    18ms                        3mu s       6000
+    100     205 mu s                    899 ns      228
+    30      55 mu s                     728 ns      75
+    """
+    if bc == "mj":
+        return np.sum(l[-2, :]) * 2
+
+    elif bc == "torus":
+        return np.sum(np.flip(l[0, :]) * l[-1, :] + l[0, :] * l[-1, :])
+    else:
+        raise NotImplementedError
