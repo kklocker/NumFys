@@ -486,13 +486,14 @@ MigrationBackup/
 
 ###########################################################################################
 
-.vscode/
+**/.vscode/
+**/__pycache__/
+**/dask-worker-space/
 Assignment_3/TFY4235_Assignment_03.pdf
 solutions/
 Assignment_2/simulations/
-Assignment_3/.vscode/
 Assignment_3/eigsh/
 
 Exam/docs/
 Exam/src/tau/
-Assignment_2/src\Notebooks/.ipynb_checkpoints/
+**/.ipynb_checkpoints/
