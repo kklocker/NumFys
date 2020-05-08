@@ -1,7 +1,0 @@
-{
-    "julia.environmentPath": "c:\\Users\\KarlKristian\\Projects\\NumFys",
-    "python.pythonPath": "C:\\Users\\KarlKristian\\Anaconda3\\envs\\numfys\\python.exe",
-    "python.linting.flake8Enabled": true,
-    "python.linting.pylintEnabled": false,
-    "python.linting.enabled": true
-}
