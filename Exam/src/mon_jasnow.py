@@ -95,7 +95,7 @@ def ising_hamiltonian(lattice, J=1.0, boundary_cond="mj"):
 
 
 @njit
-def metropolis_subroutine(lat_pp, T, bc="mj"):
+def metropolis_subroutine(lat_pp, T, bc="mj", J=1.0):
     """
     Subroutine for metropolis algorithm.
     Handles spin flipping for the lattice. 
@@ -120,7 +120,7 @@ def metropolis_subroutine(lat_pp, T, bc="mj"):
         if bc == "mj":  # Shift index to not flip boundary edges
             i += 1
 
-        flip_energy_pp = get_flip_energy(i, j, lat_pp, bc=bc)
+        flip_energy_pp = get_flip_energy(i, j, lat_pp, bc=bc, J=J)
         if T == 0.0:
             if flip_energy_pp <= 0.0:
                 lat_pp[i, j] *= -1
