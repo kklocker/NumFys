@@ -215,6 +215,8 @@ def metropolis_comparison(N_size, N_sweeps, T, skips=3, N_runs=1):
     * appends to list
     * Compute mean
 
+
+    Return mean for both algorithms.
     """
 
     ev_mj = []  # original Mon Jasnow
