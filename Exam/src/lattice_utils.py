@@ -72,7 +72,17 @@ def get_flip_energy(i, j, lat, bc="mj"):
         j_1 = (j + 1) % n  # PBC y-dir
         j_2 = (j - 1) % n  # PBC y-dir
 
-        sum_other = lat[i - 1, j] + lat[i + 1, j] + lat[i, j_1] + lat[i, j_2]
+        if i == 1:
+            l1 = lat[i - 1, j] / 2
+        else:
+            l1 = lat[i - 1, j]
+
+        if i == lat.shape[0] - 2:
+            l2 = lat[i + 1, j] / 2
+        else:
+            l2 = lat[i + 1, j]
+
+        sum_other = l1 + l2 + lat[i, j_1] + lat[i, j_2]
 
         return (
             sp * J * sum_other * 2

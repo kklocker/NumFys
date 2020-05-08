@@ -10,6 +10,9 @@ from lattice_utils import (
     basic_lattice,
 )
 
+from dask import delayed, compute
+from time import time
+
 
 @njit
 def ising_hamiltonian(lattice, J=1.0, boundary_cond="mj"):
@@ -201,6 +204,62 @@ def metropolis_mj_2(N_size, N_sweeps, T, skips=50, N_runs=10, bc="mj"):
 
 
 @njit
+def metropolis_comparison(N_size, N_sweeps, T, skips=3, N_runs=1):
+    """
+    Metropolis algorithm for computing expectation values of energy 
+    difference for both original and extended Mon Jasnow algorithms
+
+    For both systems: 
+    * Invokes the metropolis subroutine
+    * Computes energy difference
+    * appends to list
+    * Compute mean
+
+    """
+
+    ev_mj = []  # original Mon Jasnow
+    ev_ex = []  # Extended
+    for run in range(N_runs):
+
+        lattice_mj = get_lattice_pp(N_size, aligned=True)  # Create ++ -lattice
+        lattice_ex = basic_lattice(N_size)
+        prev = 0  # keeps track of last sampled state
+        for i in range(N_sweeps):  # Do N_sweep, bc=bc sweeps.
+            if i == 0:
+                for _ in range(
+                    max(50, skips)
+                ):  # Minimum of 50 initial sweeps no matter what
+                    metropolis_subroutine(lattice_mj, T, bc="mj")
+                    metropolis_subroutine(lattice_ex, T, bc="torus")
+            if i >= (prev + skips):
+                prev = i  # Keeps track of index of current sample
+                E_diff_mj = energy_diff(lattice_mj, bc="mj")
+                E_diff_ex = energy_diff(lattice_ex, bc="torus")
+                k_mj = np.exp(-E_diff_mj / T)
+
+                if (k_mj == 0.0) or (k_mj == np.inf):
+                    pass
+                else:
+                    ev_mj.append(k_mj)
+
+                k_ex = np.exp(-E_diff_ex / T)
+                if (k_ex == 0.0) or (k_ex == np.inf):
+                    pass
+                else:
+                    ev_ex.append(k_ex)
+
+            metropolis_subroutine(lattice_mj, T, bc="mj")
+            metropolis_subroutine(lattice_ex, T, bc="torus")
+    if len(ev_mj) == 0:
+        ev_mj.append(np.nan)
+    if len(ev_ex) == 0:
+        ev_ex.append(np.nan)
+    ev_mj = np.array(ev_mj)
+    ev_ex = np.array(ev_ex)
+    return ev_mj.mean(), ev_ex.mean()
+
+
+@njit
 def get_tau(N_size, N_sweeps, T, N_runs=10, skips=10, bc="mj"):
     """Returns list of computed tau-values
     
@@ -224,6 +283,27 @@ def get_tau(N_size, N_sweeps, T, N_runs=10, skips=10, bc="mj"):
 
 
 @njit
+def get_tau_2(N_size, N_sweeps, T, N_runs=1, skips=3):
+    """
+    Function for getting tau from both the original 
+    and extended Mon Jasnow algorithm.
+
+    Follows a similar pattern as get_tau().
+    """
+    tau_mj = np.zeros_like(T)
+    tau_ex = np.zeros_like(T)
+
+    for i in range(tau_mj.shape[0]):
+        ev_mj, ev_ex = metropolis_comparison(
+            N_size, N_sweeps, T[i], skips=skips, N_runs=N_runs
+        )
+        tau_mj[i] = -np.log(ev_mj) * T[i] / N_size
+        tau_ex[i] = -np.log(ev_ex) * T[i] / N_size
+
+    return tau_mj, tau_ex
+
+
+@njit
 def get_tau_scaling(N_list, T, N_sweeps, N_runs=1, skips=3, bc="torus"):
     """
     Returns matrix of tau-scalings for different N and different T
@@ -237,3 +317,29 @@ def get_tau_scaling(N_list, T, N_sweeps, N_runs=1, skips=3, bc="torus"):
         tau_matrix[i, :] = get_tau(N_list[i], N_sweeps, T, N_runs, skips=skips, bc=bc)
 
     return tau_matrix
+
+
+def tau_at_tc(N_list, N_sweeps, N_runs=1, skips=3, bc="torus"):
+    """
+    Computes tau at Tc for multiple values of N.
+    The computation is done in parallell using the framework
+    provided by dask.
+
+    """
+
+    Tc = np.array([2 / np.log(1 + np.sqrt(2))])  # Analytic critical T
+
+    res = []  # Intermediate list
+    for n in N_list:  # Add delayed functions to list
+        ta = delayed(get_tau)(n, N_sweeps, Tc, N_runs=N_runs, skips=skips, bc=bc)
+        res.append(ta)
+    a = time()  # Start time
+    tau_tc = compute(*res)  # Compute all delayed functions in parallell
+    b = time()  # Stop time
+    np.save(
+        f"tau/tau_tc_N_sweeps{N_sweeps}_Nruns{N_runs}_N{min(N_list)}_{max(N_list)}",
+        [tau_tc, N_list],
+    )  # Save
+
+    print(f"Total time: {b-a}s")
+    return tau_tc
