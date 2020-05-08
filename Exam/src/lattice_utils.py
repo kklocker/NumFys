@@ -54,7 +54,7 @@ def get_lattice_pm(N):
 
 
 @njit
-def get_flip_energy(i, j, lat, bc="mj"):
+def get_flip_energy(i, j, lat, bc="mj", J=1.0):
     """
     (Local Hamilonian)
     Returns integer of sum of nearest spins times the on site spin.
@@ -65,7 +65,6 @@ def get_flip_energy(i, j, lat, bc="mj"):
 
     sp = lat[i, j]
 
-    J = 1.0
     if bc == "mj":  # Boundary conditions for the original Mon Jasnow Algorithm
         n = lat.shape[1]  # Original number of points along each direction
 
@@ -102,7 +101,7 @@ def get_flip_energy(i, j, lat, bc="mj"):
 
 
 @njit
-def energy_diff(l, bc="mj"):
+def energy_diff(l, bc="mj", J=1.0):
     """
     Returns either the energy difference 2m_s = H_+- - H-++
     as in equation (2) in the paper, or the difference Hk - Ht
@@ -119,9 +118,9 @@ def energy_diff(l, bc="mj"):
     30      55  µs                    728 ns        75
     """
     if bc == "mj":
-        return np.sum(l[-2, :]) * 2  # Original Mon -Jasnow
+        return np.sum(l[-2, :]) * 2 * J  # Original Mon -Jasnow
 
     elif bc == "torus":
-        return np.sum(l[-1, :] * (l[0, ::-1] + l[0, :]))
+        return np.sum(l[-1, :] * (l[0, ::-1] + l[0, :])) * J
     else:
         raise NotImplementedError
